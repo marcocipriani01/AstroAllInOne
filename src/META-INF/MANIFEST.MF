@@ -1,0 +1,6 @@
+Manifest-Version: 1.0
+Specification-Vendor: SquareBoot
+Main-Class: squareboot.astro.allinone.Main
+Name: squareboot/astro/allinone
+Specification-Title: AstroAllInOne
+Specification-Version: 1.0

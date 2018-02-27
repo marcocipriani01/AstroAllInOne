@@ -1,0 +1,12 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="AstroAllInOne:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/AstroAllInOne_jar</output-path>
+    <root id="archive" name="AstroAllInOne.jar">
+      <element id="module-output" name="AstroAllInOne" />
+      <element id="library" level="project" name="Commons CLI" />
+      <element id="library" level="project" name="gson" />
+      <element id="library" level="project" name="jSSC" />
+      <element id="library" level="project" name="SeaGlass" />
+    </root>
+  </artifact>
+</component>
