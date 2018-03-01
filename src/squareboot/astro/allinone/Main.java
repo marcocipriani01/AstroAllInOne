@@ -1,14 +1,11 @@
 package squareboot.astro.allinone;
 
-import laazotea.indi.driver.INDIConnectionHandler;
+import com.sun.java.swing.plaf.gtk.GTKLookAndFeel;
+import squareboot.astro.allinone.io.Arduino;
 
 import javax.swing.*;
 import java.awt.*;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.net.URISyntaxException;
 
 /**
  * @author SquareBoot
@@ -50,11 +47,9 @@ public class Main {
      * @see <a href="http://stackoverflow.com/questions/9123002/how-to-install-configure-custom-java-look-and-feel">How to install/configure custom Java Look-And-Feel?</a>
      */
     public static void main(String[] args) {
-        System.err.println("Welcome!");
-        /*try {
-            System.err.println("Setting up Seaglass L&F...");
-            //UIManager.setLookAndFeel("com.seaglasslookandfeel.SeaGlassLookAndFeel");
-
+        try {
+            System.err.println("Setting up GTK L&F...");
+            UIManager.setLookAndFeel(new GTKLookAndFeel());
             UIManager.getLookAndFeelDefaults()
                     .put("defaultFont", APP_BASE_FONT);
             UIManager.getLookAndFeelDefaults()
@@ -63,9 +58,11 @@ public class Main {
         } catch (Exception e) {
             System.err.println("Unable to set up UI correctly!");
             e.printStackTrace();
-        }*/
+        }
 
-        INDIPWMDriver driver = new INDIPWMDriver(System.in, System.out);
+        Arduino arduino = new Arduino("/dev/ttyACM0");
+        INDIPinDriver driver = new INDIPinDriver(arduino, new int[]{3, 4},
+                new int[]{5, 6});
         driver.startListening();
     }
 

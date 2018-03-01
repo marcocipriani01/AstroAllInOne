@@ -19,12 +19,12 @@ import java.util.Arrays;
  * @see <a href="https://code.google.com/archive/p/java-simple-serial-connector/wikis/jSSC_examples.wiki">jSSC examples - Google Code Archive</a>
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class Arduino implements SerialPortEventListener, WithListeners<MessageListener<String>> {
+public class Arduino implements SerialPortEventListener {
 
     /**
      * List of all the listeners.
      */
-    private ArrayList<MessageListener<String>> listeners = new ArrayList<>();
+    private ArrayList<SerialMessageListener> listeners = new ArrayList<>();
     /**
      * {@code true} to lock the listeners. Used by {@link #waitFor(ConditionChecker, long)}.
      */
@@ -59,11 +59,21 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
     }
 
     /**
+     * Class constructor. Initializes the serial port and starts a connection.
+     *
+     * @param port the port of your board.
+     * @param rate the baud rate.
+     */
+    public Arduino(String port, int rate) throws ConnectionError {
+        connect(port, rate);
+    }
+
+    /**
      * Serial ports discovery.
      *
      * @return an {@code ArrayList<CommPortIdentifier>} containing all the available and not busy ports.
      */
-    public static ArrayList<String> scanForPorts() {
+    public static ArrayList<String> listAvailablePorts() {
         return new ArrayList<>(Arrays.asList(SerialPortList.getPortNames()));
     }
 
@@ -79,10 +89,9 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
     /**
      * Adds a listener to your class.
      *
-     * @param serialMessageListener your main class.
+     * @param serialMessageListener a listener.
      */
-    @Override
-    public void addListener(MessageListener<String> serialMessageListener) {
+    public void addListener(SerialMessageListener serialMessageListener) {
         listeners.add(serialMessageListener);
     }
 
@@ -104,23 +113,23 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
             ConnectionError.Type type;
             switch (e.getExceptionType()) {
                 case SerialPortException.TYPE_PORT_BUSY: {
-                    type = ConnectionError.Type.CONNECTION_PORT_BUSY;
+                    type = ConnectionError.Type.PORT_BUSY;
                     break;
                 }
 
                 case SerialPortException.TYPE_PORT_ALREADY_OPENED: {
-                    type = ConnectionError.Type.CONNECTION_PORT_BUSY;
+                    type = ConnectionError.Type.PORT_BUSY;
                     break;
                 }
 
 
                 case SerialPortException.TYPE_PORT_NOT_FOUND: {
-                    type = ConnectionError.Type.CONNECTION_PORT_NOT_FOUND;
+                    type = ConnectionError.Type.PORT_NOT_FOUND;
                     break;
                 }
 
                 default: {
-                    type = ConnectionError.Type.UNKNOWN_FATAL;
+                    type = ConnectionError.Type.UNKNOWN;
                 }
             }
             throw new ConnectionError("An error occurred during connection!", e, type);
@@ -144,12 +153,12 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
     public void disconnect() throws ConnectionError {
         try {
             if (!serialPort.closePort()) {
-                throw new ConnectionError("Something went wrong during the disconnection!", ConnectionError.Type.DISCONNECTION);
+                throw new ConnectionError("Something went wrong during the disconnection!", ConnectionError.Type.UNABLE_TO_DISCONNECT);
             }
             listeners.clear();
 
         } catch (SerialPortException e) {
-            throw new ConnectionError("Something went wrong during the disconnection!", e, ConnectionError.Type.DISCONNECTION);
+            throw new ConnectionError("Something went wrong during the disconnection!", e, ConnectionError.Type.UNABLE_TO_DISCONNECT);
         }
     }
 
@@ -162,8 +171,8 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
         new Thread(() -> {
             try {
                 if (!serialPort.writeBytes(message.getBytes())) {
-                    maybeNotifyError(new ConnectionError("An error occurred while sending the message!",
-                            ConnectionError.Type.TRANSFER_OUTPUT));
+                    notifyError(new ConnectionError("An error occurred while sending the message!",
+                            ConnectionError.Type.OUTPUT));
                 }
 
             } catch (SerialPortException e) {
@@ -175,7 +184,7 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
                     }
 
                     case SerialPortException.TYPE_PORT_NOT_OPENED: {
-                        type = ConnectionError.Type.TRANSFER_IO;
+                        type = ConnectionError.Type.IO;
                         break;
                     }
 
@@ -183,7 +192,7 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
                         type = ConnectionError.Type.UNKNOWN;
                     }
                 }
-                maybeNotifyError(new ConnectionError("An error occurred during data transfer!", e, type));
+                notifyError(new ConnectionError("An error occurred during data transfer!", e, type));
             }
         }, "Serial data sender").start();
     }
@@ -218,16 +227,13 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
     }
 
     /**
-     * Maybe sends an error event to the listeners: for each listener,
-     * if it is an instance of the {@code SerialMessageListener} interface, this method will notify it about the given exception.
+     * Sends an error event to the listeners.
      *
      * @param e the exception to notify.
      */
-    private void maybeNotifyError(Exception e) {
-        for (MessageListener<String> l : listeners) {
-            if (l instanceof SerialMessageListener) {
-                ((SerialMessageListener) l).onConnectionError(e);
-            }
+    private void notifyError(Exception e) {
+        for (SerialMessageListener l : listeners) {
+            l.onConnectionError(e);
         }
     }
 
@@ -296,8 +302,8 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
             }
 
         } catch (SerialPortException e) {
-            maybeNotifyError(new ConnectionError("An error occurred while receiving data from the serial port!",
-                    e, ConnectionError.Type.TRANSFER_INPUT));
+            notifyError(new ConnectionError("An error occurred while receiving data from the serial port!",
+                    e, ConnectionError.Type.INPUT));
         }
     }
 
@@ -311,7 +317,7 @@ public class Arduino implements SerialPortEventListener, WithListeners<MessageLi
             msg = msg.replace("\n", "").replace("\r", "");
             if (!msg.equals("")) {
                 if (!listenersDetach) {
-                    for (MessageListener<String> l : listeners) {
+                    for (SerialMessageListener l : listeners) {
                         l.onMessage(msg);
                     }
 

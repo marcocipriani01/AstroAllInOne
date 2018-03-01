@@ -8,14 +8,13 @@ package squareboot.astro.allinone.io;
  * @see Arduino
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public interface SerialMessageListener extends MessageListener<String> {
+public interface SerialMessageListener {
 
     /**
      * Called when a new message is received from the Arduino.
      *
      * @param msg the received message.
      */
-    @Override
     void onMessage(final String msg);
 
     /**

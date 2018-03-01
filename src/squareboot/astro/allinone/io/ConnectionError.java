@@ -1,17 +1,16 @@
 package squareboot.astro.allinone.io;
 
 /**
- * Class which forwards Java exception to an application-local exception management made
- * specifically for errors during connections to a socket, a board or a generic board.
+ * Exception related to connections, sockets, communication and data trasfer in general.
  *
  * @author SquareBoot
  * @version 0.1
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class ConnectionError extends Exception {
+public class ConnectionError extends RuntimeException {
 
     /**
-     * The type of error.
+     * The kind of the error occurred.
      */
     private Type type;
 
@@ -19,6 +18,7 @@ public class ConnectionError extends Exception {
      * Constructs a new exception with {@code null} as its detail message.
      */
     public ConnectionError() {
+        super();
     }
 
     /**
@@ -55,6 +55,7 @@ public class ConnectionError extends Exception {
      * @see Type
      */
     public ConnectionError(Type type) {
+        super();
         this.type = type;
     }
 
@@ -126,9 +127,9 @@ public class ConnectionError extends Exception {
          */
         UNKNOWN,
         /**
-         * <b>Fatal</b> unknown error.
+         * Not connected.
          */
-        UNKNOWN_FATAL,
+        NOT_CONNECTED,
         /**
          * Generic, port busy.
          */
@@ -136,15 +137,15 @@ public class ConnectionError extends Exception {
         /**
          * Error during the I/O.
          */
-        TRANSFER_IO,
+        IO,
         /**
          * Error in input transfer.
          */
-        TRANSFER_INPUT,
+        INPUT,
         /**
          * Error in output transfer.
          */
-        TRANSFER_OUTPUT,
+        OUTPUT,
         /**
          * Error during connection.
          */
@@ -152,15 +153,15 @@ public class ConnectionError extends Exception {
         /**
          * Error during connection, port busy.
          */
-        CONNECTION_PORT_BUSY,
+        PORT_BUSY,
         /**
          * Error during connection, no port found.
          */
-        CONNECTION_PORT_NOT_FOUND,
+        PORT_NOT_FOUND,
         /**
          * Error during disconnection.
          */
-        DISCONNECTION,
+        UNABLE_TO_DISCONNECT,
         /**
          * Error that occurs when the client doesn't receive a response to an important request.
          */
@@ -169,7 +170,7 @@ public class ConnectionError extends Exception {
          * Error that occurs when the client doesn't receive a valid response to a request, or a received message was invalid.
          * Could be both a warning or a fatal error.
          */
-        INVALID_PROTOCOL,
+        PROTOCOL,
         /**
          * Occurs when the network interfaces are unreachable.
          */
