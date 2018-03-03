@@ -1,11 +1,17 @@
 package squareboot.astro.allinone;
 
 import com.sun.java.swing.plaf.gtk.GTKLookAndFeel;
-import squareboot.astro.allinone.io.Arduino;
+import laazotea.indi.driver.INDIDriver;
+import squareboot.astro.allinone.indi.*;
+import squareboot.astro.allinone.serial.Arduino;
+import squareboot.astro.allinone.serial.ArduinoPin;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 /**
  * @author SquareBoot
@@ -26,6 +32,10 @@ public class Main {
      * Console font.
      */
     public static Font CONSOLE_FONT;
+    /**
+     * Global settings
+     * */
+    public static Settings settings;
 
     static {
         try {
@@ -34,10 +44,14 @@ public class Main {
             CONSOLE_FONT = loadFont("/squareboot/astro/allinone/res/CutiveMono.ttf").deriveFont(15f);
 
         } catch (Exception e) {
-            System.err.println("Unable to set up the custom fonts: " + e.getMessage());
+            System.err.println("Unable to set up fonts: " + e.getMessage());
             e.printStackTrace();
         }
     }
+
+    public static File file;
+
+    public static DriverDefinition[] drivers;
 
     /**
      * Main. Configures the Look and Feel and starts the application.
@@ -48,22 +62,51 @@ public class Main {
      */
     public static void main(String[] args) {
         try {
-            System.err.println("Setting up GTK L&F...");
+            System.out.println("Loading fonts...");
+            if (APP_BASE_FONT != null) {
+                UIManager.getLookAndFeelDefaults().put("defaultFont", APP_BASE_FONT);
+            }
+            if (TITLE_FONT != null) {
+                UIManager.getLookAndFeelDefaults().put("InternalFrame.titleFont", TITLE_FONT);
+            }
+            System.out.println("Loading GTK+...");
             UIManager.setLookAndFeel(new GTKLookAndFeel());
-            UIManager.getLookAndFeelDefaults()
-                    .put("defaultFont", APP_BASE_FONT);
-            UIManager.getLookAndFeelDefaults()
-                    .put("InternalFrame.titleFont", TITLE_FONT);
 
         } catch (Exception e) {
             System.err.println("Unable to set up UI correctly!");
             e.printStackTrace();
         }
 
-        Arduino arduino = new Arduino("/dev/ttyACM0");
-        INDIPinDriver driver = new INDIPinDriver(arduino, new int[]{3, 4},
-                new int[]{5, 6});
-        driver.startListening();
+        System.out.println("Starting server...");
+        INDIServer server = new INDIServer();
+        System.out.println("Loading drivers...");
+        server.loadJava(INDIArduinoDriver.class);
+
+        // find /usr/bin -name indi_* -perm /u+x -type f > "$(dirname "$0")/drivers"
+       /*File[] list = new File("/usr/bin").listFiles();
+        ArrayList<DriverDefinition> driverDefinitions = new ArrayList<>();
+        for (File f : list) {
+            if (f.getName().startsWith("indi_") && f.isFile()) {
+                driverDefinitions.add(new NativeDriverDefinition(f.getAbsolutePath(), f.getAbsolutePath()));
+                System.out.println(f.getName());
+            }
+        }
+        Object[] array = driverDefinitions.toArray();
+        drivers = Arrays.copyOf(array, array.length, DriverDefinition[].class);*/
+
+        //Arduino arduino = new Arduino("/dev/ttyACM0");
+        INDIArduinoDriver arduinoDriver = INDIArduinoDriver.getInstance();
+        if (arduinoDriver == null) {
+            System.out.println("peppe");
+        }
+        //arduinoDriver.init(arduino, new ArduinoPin[]{new ArduinoPin(122, "c2", 122)}, new ArduinoPin[]{new ArduinoPin(12, "c", 12)});
+        file = new File(args[0]);
+        //settings = Settings.load(file);
+        settings = Settings.empty();
+        settings.drivers.add(new JavaDriverDefinition(arduinoDriver, "peppe"));
+        settings.save(file);
+        settings = Settings.load(file);
+        //new ControlPanel();
     }
 
     /**

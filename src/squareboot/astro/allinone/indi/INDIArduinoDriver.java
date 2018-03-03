@@ -1,13 +1,16 @@
-package squareboot.astro.allinone;
+package squareboot.astro.allinone.indi;
 
 import laazotea.indi.Constants;
 import laazotea.indi.Constants.PropertyPermissions;
 import laazotea.indi.Constants.PropertyStates;
 import laazotea.indi.INDIException;
 import laazotea.indi.driver.*;
-import squareboot.astro.allinone.io.Arduino;
-import squareboot.astro.allinone.io.ConnectionError;
+import squareboot.astro.allinone.serial.ArduinoPin;
+import squareboot.astro.allinone.serial.Arduino;
+import squareboot.astro.allinone.serial.ConnectionError;
 
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -19,75 +22,83 @@ import java.util.LinkedHashSet;
  * @version 0.1
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class INDIPinDriver extends INDIDriver implements INDIConnectionHandler {
+public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandler {
 
-    /**
-     * The board to control.
-     */
-    private final Arduino arduino;
+    private static INDIArduinoDriver instance;
     /**
      * The map of pins.
      */
-    HashMap<Integer, Integer> pinsMap = new HashMap<>();
+    HashMap<INDIElement, ArduinoPin> pinsMap = new HashMap<>();
+    /**
+     * The board to control.
+     */
+    private Arduino arduino;
     // The properties and elements of this driver
-    private INDISwitchProperty digPinProps;
+    private INDISwitchProperty digitalPinProps;
     private INDINumberProperty pwmPinsProp;
 
     /**
      * Class constructor.
-     *
+     */
+    public INDIArduinoDriver(InputStream inputStream, OutputStream outputStream) {
+        super(inputStream, outputStream);
+        instance = this;
+    }
+
+    /**
+     * Singleton instance.
+     */
+    public static INDIArduinoDriver getInstance() {
+        return instance;
+    }
+
+    /**
      * @param arduino    an Arduino board. Must be already connected.
      * @param switchPins a list of digital pins (on/off only).
      * @param pwmPins    a list of PWM-capable pins.
      */
-    public INDIPinDriver(Arduino arduino, int[] switchPins, int[] pwmPins) {
-        super(System.in, System.out);
+    public void init(Arduino arduino, ArduinoPin[] switchPins, ArduinoPin[] pwmPins) {
         this.arduino = arduino;
         // Restart the board to ensure that all the pins are turned off.
-        arduino.println("RS");
+        arduino.println(":RS#");
 
         // Look for duplicated pins
         LinkedHashSet<Integer> checker = new LinkedHashSet<>();
-        for (int p : switchPins) {
-            checker.add(p);
+        for (ArduinoPin p : switchPins) {
+            checker.add(p.getPin());
         }
-        for (int p : pwmPins) {
-            checker.add(p);
+        for (ArduinoPin p : pwmPins) {
+            checker.add(p.getPin());
         }
         if (checker.size() != (switchPins.length + pwmPins.length)) {
             throw new IllegalStateException("Duplicated pins found in the list!");
         }
 
-        digPinProps = new INDISwitchProperty(this, "Digital pins", "Digital pins", "Control",
+        digitalPinProps = new INDISwitchProperty(this, "Digital pins", "Digital pins", "Control",
                 PropertyStates.OK, PropertyPermissions.RW, Constants.SwitchRules.ANY_OF_MANY);
-        for (int p : pwmPins) {
-            String name = "Pin " + p;
-            INDISwitchElement element = new INDISwitchElement(digPinProps, name, name, Constants.SwitchStatus.OFF);
-            pinsMap.put(p, 0);
+        for (ArduinoPin pin : pwmPins) {
+            pinsMap.put(new INDISwitchElement(digitalPinProps, "Pin " + pin.getPin(),
+                    pin.getName(), Constants.SwitchStatus.OFF), pin);
         }
 
         pwmPinsProp = new INDINumberProperty(this, "PWM pins", "PWM pins", "Control",
                 PropertyStates.OK, PropertyPermissions.RW);
-        for (int p : pwmPins) {
-            String name = "PWM pin " + p;
-            INDINumberElement element = new INDINumberElement(pwmPinsProp, name, name,
-                    0, 0, 255, 1, "%f");
-            pinsMap.put(p, 0);
+        for (ArduinoPin pin : pwmPins) {
+            pinsMap.put(new INDINumberElement(pwmPinsProp, "PWM pin" + pin.getPin(), pin.getName(),
+                    0, 0, 255, 1, "%f"), pin);
         }
     }
 
     /**
-     * Sets a pin's value.
+     * Updates a pin's value.
      *
-     * @param pin   the pin ID.
-     * @param value the new value. Can be 0 to turn off, or 1 (for on/off digital pins), or 2→255 (for PWM-capable pins).
+     * @param pin the pin ID.
      */
-    public void setPinValue(int pin, int value) {
+    public void updatePin(ArduinoPin pin) {
         if (!arduino.isConnected()) {
             throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
         }
-        arduino.println(":AV" + String.format("%02d", pin) + String.format("%03d", value) + "#");
-        pinsMap.replace(pin, value);
+        arduino.println(":AV" + String.format("%02d", pin.getPin()) + String.format("%03d", pin.getValue()) + "#");
     }
 
     /**
@@ -103,13 +114,11 @@ public class INDIPinDriver extends INDIDriver implements INDIConnectionHandler {
         if (property == pwmPinsProp) {
             for (INDINumberElementAndValue eAV : elementsAndValues) {
                 INDINumberElement element = eAV.getElement();
-                int pin = Integer.valueOf(element.getName().replace("PWM pin ", ""));
+                ArduinoPin pin = pinsMap.get(element);
                 int newValue = eAV.getValue().intValue();
-                // Do not confuse value 1 (digital on) with a valid PWM value! See setPinValue(int, int) for further information!
-                newValue = (newValue == 1) ? 2 : newValue;
-                if (newValue != pinsMap.get(pin)) {
-                    setPinValue(pin, newValue);
-                    element.setValue((double) newValue);
+                if (newValue != pin.getValue()) {
+                    pin.setValue(newValue);
+                    updatePin(pin);
                 }
             }
             pwmPinsProp.setState(PropertyStates.OK);
@@ -134,20 +143,19 @@ public class INDIPinDriver extends INDIDriver implements INDIConnectionHandler {
 
     @Override
     public void processNewSwitchValue(INDISwitchProperty property, Date timestamp, INDISwitchElementAndValue[] elementsAndValues) {
-        if (property == digPinProps) {
+        if (property == digitalPinProps) {
             for (INDISwitchElementAndValue eAV : elementsAndValues) {
                 INDISwitchElement element = eAV.getElement();
-                int pin = Integer.valueOf(element.getName().replace("Pin ", ""));
-                Constants.SwitchStatus newValue = eAV.getValue();
-                int newIntValue = newValue == Constants.SwitchStatus.ON ? 1 : 0;
-                if (newIntValue != pinsMap.get(pin)) {
-                    setPinValue(pin, newIntValue);
-                    element.setValue(newValue);
+                ArduinoPin pin = pinsMap.get(element);
+                int newValue = eAV.getValue() == Constants.SwitchStatus.ON ? 255 : 0;
+                if (newValue != pin.getValue()) {
+                    pin.setValue(newValue);
+                    updatePin(pin);
                 }
             }
-            digPinProps.setState(PropertyStates.OK);
+            digitalPinProps.setState(PropertyStates.OK);
             try {
-                updateProperty(digPinProps);
+                updateProperty(digitalPinProps);
 
             } catch (INDIException e) {
                 e.printStackTrace();
@@ -157,8 +165,7 @@ public class INDIPinDriver extends INDIDriver implements INDIConnectionHandler {
 
     @Override
     public void driverConnect(Date timestamp) {
-        printMessage("Driver connected");
-        addProperty(digPinProps);
+        addProperty(digitalPinProps);
         addProperty(pwmPinsProp);
     }
 
@@ -167,8 +174,7 @@ public class INDIPinDriver extends INDIDriver implements INDIConnectionHandler {
      */
     @Override
     public void driverDisconnect(Date timestamp) {
-        printMessage("Driver disconnected");
-        removeProperty(digPinProps);
+        removeProperty(digitalPinProps);
         removeProperty(pwmPinsProp);
     }
 }

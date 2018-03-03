@@ -1,4 +1,4 @@
-package squareboot.astro.allinone.io;
+package squareboot.astro.allinone.serial;
 
 import jssc.*;
 

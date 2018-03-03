@@ -1,4 +1,4 @@
-package squareboot.astro.allinone.io;
+package squareboot.astro.allinone.serial;
 
 /**
  * Exception related to connections, sockets, communication and data trasfer in general.
@@ -130,6 +130,18 @@ public class ConnectionError extends RuntimeException {
          * Not connected.
          */
         NOT_CONNECTED,
+        /**
+         * Not started yet.
+         */
+        NOT_STARTED,
+        /**
+         * Already started.
+         */
+        ALREADY_STARTED,
+        /**
+         * Already connected.
+         */
+        ALREADY_CONNECTED,
         /**
          * Generic, port busy.
          */

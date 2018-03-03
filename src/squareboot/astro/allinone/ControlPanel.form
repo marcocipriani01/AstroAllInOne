@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="parent" layout-manager="GridLayoutManager" row-count="2" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="4" left="4" bottom="4" right="4"/>
     <constraints>
-      <xy x="20" y="20" width="500" height="400"/>
+      <xy x="20" y="20" width="500" height="589"/>
     </constraints>
     <properties/>
     <border type="none">
@@ -19,7 +19,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="ca599" layout-manager="GridLayoutManager" row-count="6" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="ca599" layout-manager="GridLayoutManager" row-count="4" column-count="3" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="Connection"/>
@@ -35,14 +35,9 @@
                   <text value="Serial port:"/>
                 </properties>
               </component>
-              <vspacer id="befeb">
-                <constraints>
-                  <grid row="5" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-                </constraints>
-              </vspacer>
               <component id="ec876" class="javax.swing.JComboBox" binding="portsComboBox">
                 <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="2" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
                   <editable value="true"/>
@@ -58,7 +53,7 @@
               </component>
               <component id="8ad33" class="javax.swing.JSpinner" binding="indiPortField" custom-create="true">
                 <constraints>
-                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
               </component>
@@ -70,27 +65,33 @@
                   <text value="Other drivers to start:"/>
                 </properties>
               </component>
-              <component id="6b86b" class="javax.swing.JList" binding="driversList">
+              <component id="2302" class="javax.swing.JButton" binding="refreshButton">
                 <constraints>
-                  <grid row="2" column="1" row-span="2" col-span="1" vsize-policy="6" hsize-policy="2" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="50"/>
+                  <grid row="0" column="2" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false">
+                    <minimum-size width="36" height="36"/>
+                    <preferred-size width="36" height="36"/>
+                    <maximum-size width="36" height="36"/>
                   </grid>
                 </constraints>
-                <properties/>
+                <properties>
+                  <icon value="squareboot/astro/allinone/res/refresh.png"/>
+                  <text value=""/>
+                </properties>
               </component>
               <vspacer id="6097a">
                 <constraints>
                   <grid row="3" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
-              <component id="2dabc" class="javax.swing.JButton" binding="button1" default-binding="true">
+              <grid id="11c7c" binding="customDriversPanel" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
                 <constraints>
-                  <grid row="4" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="0" fill="1" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="1" row-span="2" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
-                <properties>
-                  <text value="+"/>
-                </properties>
-              </component>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
             </children>
           </grid>
           <grid id="eba1" layout-manager="GridLayoutManager" row-count="6" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

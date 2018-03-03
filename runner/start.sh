@@ -1,9 +1,9 @@
 #!/bin/bash
-trap close INT
-function close() {
+close() {
     echo "Bye!"
     exit 0
 }
+trap close INT
 
 echo "Welcome!"
 echo "Checking required packages..."
@@ -32,22 +32,28 @@ echo "Loading AstroAllInOne..."
 installDir="$(dirname "$0")/AstroAllInOne.jar"
 if [ -n "$1" ]; then
     installDir="$1"
+    echo "Using AstroAllInOne in $(dirname ${installDir})..."
 fi
-if [ -f "$installDir" ]; then
-        echo "Using installed AstroAllInOne in $(dirname ${installDir})..."
-        echo "$installDir" > "$(dirname "$0")/jar"
-
-else
+if [ ! -f "$installDir" ]; then
     echo "AstroAllInOne not found!"
     exit 4
 fi
 
-echo "Loading installed drivers list..."
-find /usr/bin -name indi_* -perm /u+x -type f > "$(dirname "$0")/drivers"
+installDir="$(dirname "$0")/AstroAllInOne.jar"
+if [ -n "$1" ]; then
+    installDir="$1"
+    echo "Using AstroAllInOne in $(dirname ${installDir})..."
+fi
+if [ ! -f "$installDir" ]; then
+    echo "AstroAllInOne not found!"
+    exit 4
+fi
 
-echo "Starting Control Panel..."
-java -jar "$installDir" "--control-panel" "--install-dir=$(dirname ${installDir})"
+dataDir="$HOME/.config/AstroAllInOne"
+mkdir -p "$dataDir"
 
-echo "Starting driver..."
-indiserver "$(dirname "$0")/driver.sh"
-close
+# echo "Loading installed drivers list..."
+# find /usr/bin -name indi_* -perm /u+x -type f > "$(dirname "$0")/drivers"
+
+#java -jar "$installDir" "--install-dir=$(dirname ${installDir})" "--data-dir=$dataDir"
+java -jar "$installDir" "${dataDir}/settings.json"
