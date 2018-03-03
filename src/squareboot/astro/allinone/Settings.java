@@ -22,4 +22,52 @@ public class Settings {
     public Settings() {
 
     }
+
+    public String getUsbPort() {
+        return usbPort;
+    }
+
+    public void setUsbPort(String usbPort) {
+        this.usbPort = usbPort;
+    }
+
+    public String getIndiPort() {
+        return indiPort;
+    }
+
+    public void setIndiPort(String indiPort) {
+        this.indiPort = indiPort;
+    }
+
+    public String[] getDrivers() {
+        return drivers;
+    }
+
+    public void setDrivers(String[] drivers) {
+        this.drivers = drivers;
+    }
+
+    public int[] getDigitalPins() {
+        return digitalPins;
+    }
+
+    public void setDigitalPins(int[] digitalPins) {
+        this.digitalPins = digitalPins;
+    }
+
+    public int[] getPwmPins() {
+        return pwmPins;
+    }
+
+    public void setPwmPins(int[] pwmPins) {
+        this.pwmPins = pwmPins;
+    }
+
+    public int getShutterCablePin() {
+        return shutterCablePin;
+    }
+
+    public void setShutterCablePin(int shutterCablePin) {
+        this.shutterCablePin = shutterCablePin;
+    }
 }
