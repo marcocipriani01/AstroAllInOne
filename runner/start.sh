@@ -39,21 +39,7 @@ if [ ! -f "$installDir" ]; then
     exit 4
 fi
 
-installDir="$(dirname "$0")/AstroAllInOne.jar"
-if [ -n "$1" ]; then
-    installDir="$1"
-    echo "Using AstroAllInOne in $(dirname ${installDir})..."
-fi
-if [ ! -f "$installDir" ]; then
-    echo "AstroAllInOne not found!"
-    exit 4
-fi
-
 dataDir="$HOME/.config/AstroAllInOne"
 mkdir -p "$dataDir"
 
-# echo "Loading installed drivers list..."
-# find /usr/bin -name indi_* -perm /u+x -type f > "$(dirname "$0")/drivers"
-
-#java -jar "$installDir" "--install-dir=$(dirname ${installDir})" "--data-dir=$dataDir"
-java -jar "$installDir" "${dataDir}/settings.json"
+java -jar "$installDir" "--data-dir=$dataDir"

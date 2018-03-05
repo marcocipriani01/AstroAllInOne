@@ -126,7 +126,7 @@ public class INDINativeDevice extends INDIDevice {
   }  
   
   @Override
-  protected String[] getNames() {
+  public String[] getNames() {
     return new String[] {name};
   }
   

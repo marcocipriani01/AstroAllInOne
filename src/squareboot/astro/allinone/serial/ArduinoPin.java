@@ -1,18 +1,23 @@
 package squareboot.astro.allinone.serial;
 
+import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 /**
  * @author SquareBoot
  * @version 0.1
  */
+@SuppressWarnings({"unused", "WeakerAccess"})
 public class ArduinoPin {
 
+    @Expose
     @SerializedName("Pin")
     private int pin;
     @SerializedName("Name")
+    @Expose
     private String name;
     @SerializedName("Value")
+    @Expose
     private int value;
 
     /**

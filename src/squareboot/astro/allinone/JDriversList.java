@@ -27,7 +27,7 @@ public class JDriversList implements ListSelectionListener {
      * Class constructor.
      */
     public JDriversList(JFrame frame, DriversListListener listener) {
-        addDriverButton.addActionListener(e -> new AddDriverDialog(frame, Main.drivers) {
+        addDriverButton.addActionListener(e -> new AddDriverDialog(frame, ) {
             @Override
             protected void onResult(DriverDefinition driver) {
                 if (driversModel.contains(driver)) {

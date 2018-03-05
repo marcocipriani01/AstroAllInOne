@@ -7,7 +7,7 @@ import laazotea.indi.driver.INDIDriver;
  * @version 0.1
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class JavaDriverDefinition extends DriverDefinition<String> {
+public class JavaDriverDefinition extends DriverDefinition<Class<? extends INDIDriver>> {
 
     /**
      * Class constructor.
@@ -20,18 +20,18 @@ public class JavaDriverDefinition extends DriverDefinition<String> {
      * Class constructor.
      *
      * @param param      the path to this driver.
-     * @param identifier an identifier for this driver.
+     * @param identifier an identifier for this driver. Mustn't contain the "&" char.
      */
-    public JavaDriverDefinition(INDIDriver param, String identifier) {
-        super(param.getClass().getName(), identifier);
+    public JavaDriverDefinition(Class<? extends INDIDriver> param, String identifier) {
+        super(param, identifier);
     }
 
-    public String getDriverClass() {
+    public Class<? extends INDIDriver> getDriverClass() {
         return param;
     }
 
     @Override
     public String toString() {
-        return super.toString() + " @" + param.getClass().getSimpleName().toLowerCase();
+        return super.toString() + " @" + param.getSimpleName();
     }
 }

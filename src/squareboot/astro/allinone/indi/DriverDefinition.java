@@ -21,11 +21,16 @@ public abstract class DriverDefinition<I> {
      * Class constructor.
      *
      * @param param      a path to this driver, class or something else.
-     * @param identifier an identifier for this driver.
+     * @param identifier an identifier for this driver. Mustn't contain the "&" char.
      */
     public DriverDefinition(I param, String identifier) {
         this.param = param;
-        this.identifier = identifier;
+        if (identifier.contains("&")) {
+            throw new IllegalArgumentException("Invalid identifier: " + identifier);
+
+        } else {
+            this.identifier = identifier;
+        }
     }
 
     public String getIdentifier() {
@@ -38,6 +43,6 @@ public abstract class DriverDefinition<I> {
 
     @Override
     public String toString() {
-        return identifier.toLowerCase();
+        return identifier;
     }
 }

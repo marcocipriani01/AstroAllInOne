@@ -1,14 +1,14 @@
 package squareboot.astro.allinone;
 
-import com.sun.java.swing.plaf.gtk.GTKLookAndFeel;
-import laazotea.indi.driver.INDIDriver;
+import com.google.gson.reflect.TypeToken;
+import org.apache.commons.cli.*;
 import squareboot.astro.allinone.indi.*;
-import squareboot.astro.allinone.serial.Arduino;
-import squareboot.astro.allinone.serial.ArduinoPin;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -29,29 +29,13 @@ public class Main {
      */
     public static Font TITLE_FONT;
     /**
-     * Console font.
-     */
-    public static Font CONSOLE_FONT;
-    /**
      * Global settings
-     * */
+     */
     public static Settings settings;
-
-    static {
-        try {
-            APP_BASE_FONT = loadFont("/squareboot/astro/allinone/res/OpenSans.ttf").deriveFont(15f);
-            TITLE_FONT = loadFont("/squareboot/astro/allinone/res/OpenSans.ttf").deriveFont(Font.BOLD).deriveFont(16f);
-            CONSOLE_FONT = loadFont("/squareboot/astro/allinone/res/CutiveMono.ttf").deriveFont(15f);
-
-        } catch (Exception e) {
-            System.err.println("Unable to set up fonts: " + e.getMessage());
-            e.printStackTrace();
-        }
-    }
-
-    public static File file;
-
-    public static DriverDefinition[] drivers;
+    /**
+     *
+     * */
+    public static DriverDefinition[] nativeDrivers;
 
     /**
      * Main. Configures the Look and Feel and starts the application.
@@ -61,28 +45,158 @@ public class Main {
      * @see <a href="http://stackoverflow.com/questions/9123002/how-to-install-configure-custom-java-look-and-feel">How to install/configure custom Java Look-And-Feel?</a>
      */
     public static void main(String[] args) {
-        try {
-            System.out.println("Loading fonts...");
-            if (APP_BASE_FONT != null) {
-                UIManager.getLookAndFeelDefaults().put("defaultFont", APP_BASE_FONT);
-            }
-            if (TITLE_FONT != null) {
-                UIManager.getLookAndFeelDefaults().put("InternalFrame.titleFont", TITLE_FONT);
-            }
-            System.out.println("Loading GTK+...");
-            UIManager.setLookAndFeel(new GTKLookAndFeel());
+        CommandLineParser parser = new DefaultParser();
 
-        } catch (Exception e) {
-            System.err.println("Unable to set up UI correctly!");
-            e.printStackTrace();
+        Options options = new Options();
+        options.addOption("d", "data-dir", true,
+                "The directory where AstroAllInOne will retrieve its settings.");
+        options.addOption("f", "no-custom-fonts", false,
+                "Forces the app to use Java fonts instead of custom one.");
+        options.addOption("g", "no-gtk", false,
+                "Forces the app to use the Java default L&F.");
+        options.addOption("p", "port", true,
+                "Specifies a port for the INDI server (default 7624).");
+        options.addOption("i", "indi-drivers", true,
+                "Specifies the directory where all the native INDI drivers are located. Default: /usr/bin");
+
+        try {
+            CommandLine line = parser.parse(options, args);
+
+            if (!line.hasOption('f')) {
+                try {
+                    System.out.println("Loading fonts...");
+                    Font f = loadFont("/squareboot/astro/allinone/res/OpenSans.ttf");
+                    APP_BASE_FONT = f.deriveFont(15f);
+                    UIManager.getLookAndFeelDefaults().put("defaultFont", APP_BASE_FONT);
+                    TITLE_FONT = f.deriveFont(Font.BOLD).deriveFont(16f);
+                    UIManager.getLookAndFeelDefaults().put("InternalFrame.titleFont", TITLE_FONT);
+
+                } catch (Exception e) {
+                    System.err.println("Unable to set up fonts: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            if (!line.hasOption('g')) {
+                try {
+                    System.out.println("Loading GTK...");
+                    UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+
+                } catch (Exception e) {
+                    System.err.println("Unable to set up GTK: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            if (line.hasOption('d')) {
+                settings = Settings.load(new File(line.getOptionValue('d')));
+
+            } else {
+                System.err.println("Please specify option --data-dir " + options.getOption("d").getDescription());
+                System.exit(5);
+            }
+
+            if (line.hasOption('p')) {
+                try {
+                    settings.indiPort = Integer.valueOf(line.getOptionValue('p'));
+
+                } catch (NumberFormatException e) {
+                    System.err.println("Unable to parse the INDI server port!");
+                    System.exit(6);
+                }
+            }
+
+            if (line.hasOption('i')) {
+                String location = line.getOptionValue('i');
+                File f = new File(location);
+                if (f.exists() && f.isDirectory()) {
+                    settings.indiDriversLocation = location;
+
+                } else {
+                    System.err.println("Invalid directory for native INDI drivers!");
+                    System.exit(7);
+                }
+            }
+
+        } catch (ParseException e) {
+            System.err.println("The given arguments are invalid!");
+            System.exit(8);
         }
 
-        System.out.println("Starting server...");
+        try {
+            System.out.println("Loading native drivers...");
+            File[] list = new File(settings.indiDriversLocation).listFiles();
+            if (list == null) {
+                System.err.println("Invalid directory for native INDI drivers!");
+                System.exit(7);
+            }
+            ArrayList<File> installedDriverDefinitions = new ArrayList<>();
+            for (File f : list) {
+                if (f.isFile() && f.getName().startsWith("indi_")) {
+                    installedDriverDefinitions.add(f);
+                }
+            }
+
+            ArrayList<DriverDefinition> storedDrivers = settings.installedNativeDrivers;
+            ArrayList<NativeDriverDefinition> nativeStoredDrivers = new ArrayList<>();
+            for (DriverDefinition sdd : storedDrivers) {
+                if (sdd instanceof NativeDriverDefinition) {
+                    nativeStoredDrivers.add((NativeDriverDefinition) sdd);
+
+                } else {
+                    nativeStoredDrivers.clear();
+                    break;
+                }
+            }
+            System.out.println("Starting server...");
+            INDIServer server; //TODO
+            server = new INDIServer(settings.indiPort);
+            //TOREPLACE
+            for (NativeDriverDefinition storedDefinition : nativeStoredDrivers) {
+                for (File installedDefinition : installedDriverDefinitions) {
+                    if (!storedDefinition.getPath().getAbsolutePath().equals(installedDefinition.getAbsolutePath())) {
+                        nativeStoredDrivers.add(
+                                new NativeDriverDefinition(
+                                        installedDefinition,
+                                        NativeDriverDefinition.processIdentifier(installedDefinition.getAbsolutePath(), server)));
+                    }
+                }
+            }
+            //NEW
+            for (File installedDefinition : installedDriverDefinitions) {
+                String path = installedDefinition.getAbsolutePath();
+                boolean contains = false;
+                for (NativeDriverDefinition storedDefinition : nativeStoredDrivers) {
+                    if (storedDefinition.getPath().getAbsolutePath().equals(path)) {
+                        contains = true;
+                    }
+                }
+                if (contains) {
+
+                }
+                if (!storedDefinition.getPath().getAbsolutePath().equals()) {
+                    nativeStoredDrivers.add(
+                            new NativeDriverDefinition(
+                                    installedDefinition,
+                                    NativeDriverDefinition.processIdentifier(installedDefinition.getAbsolutePath(), server)));
+                }
+            }
+
+            Object[] array = nativeStoredDrivers.toArray();
+            nativeDrivers = Arrays.copyOf(array, array.length, DriverDefinition[].class);
+
+        } catch (Exception e) {
+            System.err.println("Could not load native drivers in /usr/bin!");
+        }
+
+        /*System.out.println("Starting server...");
         INDIServer server = new INDIServer();
         System.out.println("Loading drivers...");
-        server.loadJava(INDIArduinoDriver.class);
+        server.loadJava(INDIArduinoDriver.class);*/
 
         // find /usr/bin -name indi_* -perm /u+x -type f > "$(dirname "$0")/drivers"
+        //if ()
+
        /*File[] list = new File("/usr/bin").listFiles();
         ArrayList<DriverDefinition> driverDefinitions = new ArrayList<>();
         for (File f : list) {
@@ -94,19 +208,25 @@ public class Main {
         Object[] array = driverDefinitions.toArray();
         drivers = Arrays.copyOf(array, array.length, DriverDefinition[].class);*/
 
-        //Arduino arduino = new Arduino("/dev/ttyACM0");
-        INDIArduinoDriver arduinoDriver = INDIArduinoDriver.getInstance();
+            //Arduino arduino = new Arduino("/dev/ttyACM0");
+            /*INDIArduinoDriver arduinoDriver = INDIArduinoDriver.getInstance();
         if (arduinoDriver == null) {
-            System.out.println("peppe");
+            System.out.println("Ahi");
+            return;
         }
         //arduinoDriver.init(arduino, new ArduinoPin[]{new ArduinoPin(122, "c2", 122)}, new ArduinoPin[]{new ArduinoPin(12, "c", 12)});
         file = new File(args[0]);
         //settings = Settings.load(file);
         settings = Settings.empty();
-        settings.drivers.add(new JavaDriverDefinition(arduinoDriver, "peppe"));
+        settings.drivers.add(new JavaDriverDefinition(arduinoDriver.getClass(), "peppe"));
         settings.save(file);
         settings = Settings.load(file);
-        //new ControlPanel();
+        System.out.println(settings.drivers.get(0).toString());
+        //new ControlPanel();*/
+    }
+
+    private static void loadNativeDriversDefinitions() {
+        //TODO
     }
 
     /**
@@ -115,6 +235,7 @@ public class Main {
      * @param pck the package where the font is located.
      * @return the required {@code Font} Object.
      */
+    @SuppressWarnings("SameParameterValue")
     private static Font loadFont(String pck) throws IOException, FontFormatException {
         return Font.createFont(Font.TRUETYPE_FONT, Main.class.getResourceAsStream(pck));
     }

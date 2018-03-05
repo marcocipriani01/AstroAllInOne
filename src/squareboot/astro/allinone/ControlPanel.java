@@ -55,7 +55,7 @@ public class ControlPanel extends JFrame {
             Main.settings.indiPort = (int) indiPortField.getValue();
             Main.settings.drivers = driversList.getDrivers();
             Main.settings.shutterCablePin = (int) shutterCablePin.getValue();
-            Main.settings.save(Main.file);
+            //Main.settings.save(Main.file); //TODO
             dispose();
         });
 
