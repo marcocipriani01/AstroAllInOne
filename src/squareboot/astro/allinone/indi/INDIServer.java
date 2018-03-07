@@ -22,7 +22,7 @@ import laazotea.indi.driver.INDIDriver;
 import laazotea.indi.server.DefaultINDIServer;
 import laazotea.indi.server.INDIClient;
 import laazotea.indi.server.INDIDevice;
-import squareboot.astro.allinone.serial.ConnectionError;
+import squareboot.astro.allinone.io.ConnectionError;
 
 import java.net.Socket;
 import java.util.ArrayList;
@@ -197,6 +197,16 @@ public class INDIServer extends DefaultINDIServer {
         } else {
             super.startListeningToClients();
         }
+    }
+
+    /**
+     * Gets if the server is listening for new Clients to connect.
+     *
+     * @return <code>true</code> if the server is listening for new Clients. <code>false</code> otherwise.
+     */
+    @Override
+    public boolean isServerRunning() {
+        return super.isServerRunning();
     }
 
     /**

@@ -1,4 +1,4 @@
-package squareboot.astro.allinone.serial;
+package squareboot.astro.allinone;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
@@ -36,27 +36,52 @@ public class ArduinoPin {
         this.value = value;
     }
 
-    public int getPin() {
-        return pin;
-    }
-
-    public void setPin(int pin) {
+    /**
+     * Class constructor.
+     */
+    public ArduinoPin(int pin, String name) {
         this.pin = pin;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
         this.name = name;
+        this.value = 0;
     }
 
+    /**
+     * @return the stored value of the pin.
+     */
     public int getValue() {
         return value;
     }
 
+    /**
+     * @param value the new value.
+     */
     public void setValue(int value) {
         this.value = value;
+    }
+
+    /**
+     * @return the pin.
+     */
+    public int getPin() {
+        return pin;
+    }
+
+    /**
+     * @return the name of the pin.
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name a new name for this pin.
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    @Override
+    public String toString() {
+        return "Pin " + name + " @" + pin;
     }
 }

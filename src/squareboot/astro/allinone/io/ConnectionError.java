@@ -1,4 +1,4 @@
-package squareboot.astro.allinone.serial;
+package squareboot.astro.allinone.io;
 
 /**
  * Exception related to connections, sockets, communication and data trasfer in general.

@@ -1,13 +1,15 @@
 package squareboot.astro.allinone;
 
-import squareboot.astro.allinone.indi.DriverDefinition;
-import squareboot.astro.allinone.serial.Arduino;
+import squareboot.astro.allinone.io.Arduino;
 
 import javax.swing.*;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.Timer;
+import java.util.TimerTask;
 
 /**
+ * The control panel.
+ *
  * @author SquareBoot
  * @version 0.1
  */
@@ -26,8 +28,11 @@ public class ControlPanel extends JFrame {
     private JComboBox<String> portsComboBox;
     private JSpinner indiPortField;
     private JButton refreshButton;
-    private JPanel customDriversPanel;
-    private JDriversList driversList;
+    private JCheckBox enableNikonCheckBox;
+    private JButton addDigitalPinButton;
+    private JButton removeDigitalPinButton;
+    private JButton addPwmPinButton;
+    private JButton removePwmPinButton;
     private ArrayList<String> serialPorts;
     private Timer refresher = new Timer("Serial ports refresher");
 
@@ -51,20 +56,17 @@ public class ControlPanel extends JFrame {
         }, 1000, 1000);
         cancelButton.addActionListener(e -> dispose());
         okButton.addActionListener(e -> {
-            Main.settings.usbPort = (String) portsComboBox.getSelectedItem();
-            Main.settings.indiPort = (int) indiPortField.getValue();
-            Main.settings.drivers = driversList.getDrivers();
-            Main.settings.shutterCablePin = (int) shutterCablePin.getValue();
+            //TODO Main.getSettings().var
+            Main.getSettings().usbPort = (String) portsComboBox.getSelectedItem();
+            Main.getSettings().indiPort = (int) indiPortField.getValue();
+            Main.getSettings().shutterCablePin = (int) shutterCablePin.getValue();
             //Main.settings.save(Main.file); //TODO
             dispose();
         });
 
-        portsComboBox.setSelectedItem(Main.settings.usbPort);
-        indiPortField.setValue(Main.settings.indiPort);
-        for (DriverDefinition dd : Main.settings.drivers) {
-            driversList.getDriversModel().addElement(dd);
-        }
-        shutterCablePin.setValue(Main.settings.shutterCablePin);
+        portsComboBox.setSelectedItem(Main.getSettings().usbPort);
+        indiPortField.setValue(Main.getSettings().indiPort);
+        shutterCablePin.setValue(Main.getSettings().shutterCablePin);
 
         setBounds(200, 150, 650, 550);
         setVisible(true);
@@ -93,8 +95,5 @@ public class ControlPanel extends JFrame {
         indiPortField = new JSpinner(new SpinnerNumberModel(7624, 10, 99999, 1));
         digitalPinsPanel = new JPanel();
         pwmPinsPanel = new JPanel();
-        customDriversPanel = new JPanel();
-        driversList = new JDriversList(this, null);
-        customDriversPanel.add(driversList.getPanel());
     }
 }

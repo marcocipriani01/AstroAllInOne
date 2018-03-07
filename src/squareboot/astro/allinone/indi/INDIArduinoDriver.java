@@ -5,9 +5,9 @@ import laazotea.indi.Constants.PropertyPermissions;
 import laazotea.indi.Constants.PropertyStates;
 import laazotea.indi.INDIException;
 import laazotea.indi.driver.*;
-import squareboot.astro.allinone.serial.ArduinoPin;
-import squareboot.astro.allinone.serial.Arduino;
-import squareboot.astro.allinone.serial.ConnectionError;
+import squareboot.astro.allinone.io.Arduino;
+import squareboot.astro.allinone.ArduinoPin;
+import squareboot.astro.allinone.io.ConnectionError;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -60,7 +60,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     public void init(Arduino arduino, ArduinoPin[] switchPins, ArduinoPin[] pwmPins) {
         this.arduino = arduino;
         // Restart the board to ensure that all the pins are turned off.
-        arduino.println(":RS#");
+        //arduino.println(":RS#"); //TODO
 
         // Look for duplicated pins
         LinkedHashSet<Integer> checker = new LinkedHashSet<>();

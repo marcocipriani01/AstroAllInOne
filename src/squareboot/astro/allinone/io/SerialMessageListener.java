@@ -1,4 +1,4 @@
-package squareboot.astro.allinone.serial;
+package squareboot.astro.allinone.io;
 
 /**
  * Arduino serial message listener interface.
