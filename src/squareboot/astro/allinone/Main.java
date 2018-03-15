@@ -1,10 +1,9 @@
 package squareboot.astro.allinone;
 
-import jssc.SerialPort;
-import jssc.SerialPortEvent;
 import org.apache.commons.cli.*;
+import squareboot.astro.allinone.indi.INDIArduinoDriver;
 import squareboot.astro.allinone.indi.INDIServer;
-import squareboot.astro.allinone.io.GenericSerialPort;
+import squareboot.astro.allinone.io.Arduino;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,14 +20,18 @@ import java.io.IOException;
 public class Main {
 
     /**
-     * App default font.
-     */
-    public static Font APP_BASE_FONT;
-    /**
-     * App title font.
-     */
+     * The icon (for Swing).
+     * */
+    public static Image logo;
+    static {
+        try {
+            logo = Toolkit.getDefaultToolkit().getImage(Main.class.
+                    getResource("/squareboot/astro/allinone/res/icon.png"));
 
-    public static Font TITLE_FONT;
+        } catch (Exception ignored) {
+
+        }
+    }
     /**
      * Global settings
      */
@@ -86,10 +89,8 @@ public class Main {
                 try {
                     System.out.println("Loading fonts...");
                     Font f = loadFont("/squareboot/astro/allinone/res/OpenSans.ttf");
-                    APP_BASE_FONT = f.deriveFont(15f);
-                    UIManager.getLookAndFeelDefaults().put("defaultFont", APP_BASE_FONT);
-                    TITLE_FONT = f.deriveFont(Font.BOLD).deriveFont(16f);
-                    UIManager.getLookAndFeelDefaults().put("InternalFrame.titleFont", TITLE_FONT);
+                    UIManager.getLookAndFeelDefaults().put("defaultFont", f.deriveFont(15f));
+                    UIManager.getLookAndFeelDefaults().put("InternalFrame.titleFont", f.deriveFont(Font.BOLD).deriveFont(16f));
 
                 } catch (Exception e) {
                     System.err.println("Unable to set up fonts: " + e.getMessage());
@@ -117,36 +118,14 @@ public class Main {
 
         } catch (ParseException e) {
             System.err.println("The given arguments are invalid!");
-            System.exit(8);
+            System.exit(7);
         }
 
-        new GenericSerialPort("/dev/pts/3") {
-
-            @Override
-            protected int getEventMask() {
-                return SerialPort.MASK_RXCHAR + SerialPort.MASK_CTS + SerialPort.MASK_DSR;
-                /*return SerialPort.MASK_RXCHAR +
-                        SerialPort.MASK_CTS +
-                        SerialPort.MASK_DSR +
-                        SerialPort.MASK_BREAK +
-                        SerialPort.MASK_RING +
-                        SerialPort.MASK_RLSD +
-                        SerialPort.MASK_RXFLAG +
-                        SerialPort.MASK_TXEMPTY +
-                        SerialPort.MASK_ERR;*/
-            }
-
-            @Override
-            public void serialEvent(SerialPortEvent portEvent) {
-                System.err.println("PEPPE! " + portEvent.getEventType());
-            }
-        };
-
-        /*System.out.println("Starting server...");
+        System.out.println("Starting server...");
         server = new INDIServer(settings.indiPort);
         if (!server.isServerRunning()) {
             System.err.println("Could not start server!");
-            System.exit(9);
+            System.exit(8);
         }
 
         System.out.println("Loading Arduino driver...");
@@ -155,12 +134,9 @@ public class Main {
         INDIArduinoDriver arduinoDriver = INDIArduinoDriver.getInstance();
         if (arduinoDriver == null) {
             System.err.println("Due to unknown reasons, the Arduino driver could not be loaded!");
-            System.exit(10);
+            System.exit(9);
         }
-        arduinoDriver.init(arduino, new ArduinoPin[]{
-                        new ArduinoPin(122, "c2", 122)},
-                new ArduinoPin[]{
-                        new ArduinoPin(12, "c", 12)});*/
+        //arduinoDriver.init(arduino, settings.digitalPins, settings.pwmPins);
     }
 
     /**

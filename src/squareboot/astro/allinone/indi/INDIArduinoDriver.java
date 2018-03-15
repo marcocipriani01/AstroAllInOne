@@ -5,8 +5,8 @@ import laazotea.indi.Constants.PropertyPermissions;
 import laazotea.indi.Constants.PropertyStates;
 import laazotea.indi.INDIException;
 import laazotea.indi.driver.*;
-import squareboot.astro.allinone.io.Arduino;
 import squareboot.astro.allinone.ArduinoPin;
+import squareboot.astro.allinone.io.Arduino;
 import squareboot.astro.allinone.io.ConnectionError;
 
 import java.io.InputStream;

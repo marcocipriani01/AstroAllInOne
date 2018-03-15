@@ -1,6 +1,9 @@
 package squareboot.astro.allinone;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import javax.swing.text.DefaultFormatter;
 
 /**
  * @author SquareBoot
@@ -24,7 +27,7 @@ public class PwmPinPanel extends AbstractPinPanel {
     /**
      * The label with the pin ID.
      */
-    private JLabel pinLabel;
+    private JSpinner pinSpinner;
 
     /**
      * Class constructor.
@@ -33,8 +36,37 @@ public class PwmPinPanel extends AbstractPinPanel {
      */
     public PwmPinPanel(ArduinoPin pin) {
         super(pin);
-        pinLabel.setText("Pin " + pin.getPin() + ":");
+
+        ((DefaultFormatter) ((JFormattedTextField) pinSpinner.getEditor().getComponent(0)).getFormatter())
+                .setCommitsOnValidEdit(true);
+        pinSpinner.addChangeListener(e -> pin.setPin((int) pinSpinner.getValue()));
+        pinSpinner.setValue(pin.getPin());
+
+        nameTextField.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateName();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateName();
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateName();
+            }
+
+            public void updateName() {
+                pin.setName(nameTextField.getText());
+            }
+        });
         nameTextField.setText(pin.getName());
+
+        ((DefaultFormatter) ((JFormattedTextField) valueSpinner.getEditor().getComponent(0)).getFormatter())
+                .setCommitsOnValidEdit(true);
+        valueSpinner.addChangeListener(e -> pin.setPin((int) valueSpinner.getValue()));
         valueSpinner.setValue(pin.getValue());
     }
 
@@ -44,5 +76,10 @@ public class PwmPinPanel extends AbstractPinPanel {
     @Override
     public JPanel getPanel() {
         return parent;
+    }
+
+    private void createUIComponents() {
+        pinSpinner = new JSpinner(new SpinnerNumberModel(13, 2, 99, 1));
+        valueSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 255, 1));
     }
 }

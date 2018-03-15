@@ -67,6 +67,13 @@ public class ArduinoPin {
     }
 
     /**
+     * @param pin a new pin.
+     */
+    public void setPin(int pin) {
+        this.pin = pin;
+    }
+
+    /**
      * @return the name of the pin.
      */
     public String getName() {
