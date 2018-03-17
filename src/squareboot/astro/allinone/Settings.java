@@ -6,7 +6,6 @@ import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
 import java.io.*;
-import java.util.ArrayList;
 
 /**
  * Stores all the app's settings.
@@ -17,24 +16,27 @@ import java.util.ArrayList;
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class Settings {
 
-    public static Gson serializer = new GsonBuilder()
+    /**
+     * An instance of {@link Gson} to save all the settings.
+     */
+    public static final Gson serializer = new GsonBuilder()
             .setPrettyPrinting().serializeNulls().excludeFieldsWithoutExposeAnnotation().create();
 
     @SerializedName("USB port")
     @Expose
-    public String usbPort = "";
+    private String usbPort = "";
     @SerializedName("INDI server port")
     @Expose
-    public int indiPort = 7624;
+    private int indiPort = 7625;
     @SerializedName("Digital pins")
     @Expose
-    public ArrayList<ArduinoPin> digitalPins = new ArrayList<>();
+    private PinArray digitalPins = new PinArray();
     @SerializedName("PWM pins")
     @Expose
-    public ArrayList<ArduinoPin> pwmPins = new ArrayList<>();
-    @Expose
-    @SerializedName("Nikon shutter pin")
-    public int shutterCablePin = -1;
+    private PinArray pwmPins = new PinArray();
+    /**
+     * The file where to store settings.
+     */
     private File file;
 
     /**
@@ -76,6 +78,48 @@ public class Settings {
         Settings s = serializer.fromJson(json.toString(), Settings.class);
         s.setFile(file);
         return s;
+    }
+
+    /**
+     * @return the serial port to use.
+     */
+    public String getUsbPort() {
+        return usbPort;
+    }
+
+    /**
+     * @param usbPort a new serial port.
+     */
+    public void setUsbPort(String usbPort) {
+        this.usbPort = usbPort;
+    }
+
+    /**
+     * @return the INDI port to use.
+     */
+    public int getIndiPort() {
+        return indiPort;
+    }
+
+    /**
+     * @param indiPort a new port for the INDI server.
+     */
+    public void setIndiPort(int indiPort) {
+        this.indiPort = indiPort;
+    }
+
+    /**
+     * @return the list of the current stored digital pins.
+     */
+    public PinArray getDigitalPins() {
+        return digitalPins;
+    }
+
+    /**
+     * @return the list of the current stored PWM pins.
+     */
+    public PinArray getPwmPins() {
+        return pwmPins;
     }
 
     /**

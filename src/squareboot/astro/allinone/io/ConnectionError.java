@@ -1,7 +1,7 @@
 package squareboot.astro.allinone.io;
 
 /**
- * Exception related to connections, sockets, communication and data trasfer in general.
+ * Exception related to connections, sockets, communication and data transfer in general.
  *
  * @author SquareBoot
  * @version 0.1

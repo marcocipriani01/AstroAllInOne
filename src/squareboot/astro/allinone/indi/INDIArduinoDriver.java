@@ -24,6 +24,9 @@ import java.util.LinkedHashSet;
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandler {
 
+    /**
+     * An instance of this class.
+     */
     private static INDIArduinoDriver instance;
     /**
      * The map of pins.
@@ -34,7 +37,13 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
      */
     private Arduino arduino;
     // The properties and elements of this driver
+    /**
+     * All the properties used by digital pins.
+     */
     private INDISwitchProperty digitalPinProps;
+    /**
+     * All the properties used by PWM pins.
+     */
     private INDINumberProperty pwmPinsProp;
 
     /**
@@ -60,7 +69,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     public void init(Arduino arduino, ArduinoPin[] switchPins, ArduinoPin[] pwmPins) {
         this.arduino = arduino;
         // Restart the board to ensure that all the pins are turned off.
-        //arduino.println(":RS#"); //TODO
+        arduino.println(":RS#");
 
         // Look for duplicated pins
         LinkedHashSet<Integer> checker = new LinkedHashSet<>();
@@ -169,9 +178,6 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
         addProperty(pwmPinsProp);
     }
 
-    /**
-     * Remove the image and send properties changes
-     */
     @Override
     public void driverDisconnect(Date timestamp) {
         removeProperty(digitalPinProps);

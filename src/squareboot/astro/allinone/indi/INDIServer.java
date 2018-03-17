@@ -1,38 +1,18 @@
-/*
- *  This file is part of INDI for Java Server.
- *
- *  INDI for Java Server is free software: you can redistribute it
- *  and/or modify it under the terms of the GNU General Public License
- *  as published by the Free Software Foundation, either version 3 of
- *  the License, or (at your option) any later version.
- *
- *  INDI for Java Server is distributed in the hope that it will be
- *  useful, but WITHOUT ANY WARRANTY; without even the implied warranty
- *  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with INDI for Java Server.  If not, see
- *  <http://www.gnu.org/licenses/>.
- */
 package squareboot.astro.allinone.indi;
 
 import laazotea.indi.INDIException;
 import laazotea.indi.driver.INDIDriver;
 import laazotea.indi.server.DefaultINDIServer;
 import laazotea.indi.server.INDIClient;
-import laazotea.indi.server.INDIDevice;
 import squareboot.astro.allinone.io.ConnectionError;
 
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
  * A simple INDI Server that basically sends all messages from drivers and
- * clients and viceversa, just performing basic checks of messages integrity.
- * It allows to dinamically load / unload different kinds of Devices with simple
- * shell commands.
+ * clients and vice versa, just performing basic checks of messages integrity.
+ * It allows to dynamically load / unload Java and native drivers.
  *
  * @author S. Alonso (Zerjillo) [zerjioi at ugr.es]
  * @author SquareBoot
@@ -55,16 +35,6 @@ public class INDIServer extends DefaultINDIServer {
      */
     public INDIServer(int port) {
         super(port);
-    }
-
-    /**
-     * Gets the list of loaded devices.
-     *
-     * @return The list of loaded devices.
-     */
-    @Override
-    public ArrayList<INDIDevice> getDevices() {
-        return super.getDevices();
     }
 
     /**
@@ -101,7 +71,7 @@ public class INDIServer extends DefaultINDIServer {
      * @see #loadJar(String)
      * @see #unloadJar(String)
      */
-    private void reloadJar(String jar) {
+    public void reloadJar(String jar) {
         unloadJar(jar);
         try {
             Thread.sleep(100);
@@ -172,7 +142,7 @@ public class INDIServer extends DefaultINDIServer {
      * @see #loadNative(String)
      * @see #unloadNative(String)
      */
-    private void reloadNative(String name) {
+    public void reloadNative(String name) {
         unloadNative(name);
         try {
             Thread.sleep(100);
@@ -190,7 +160,7 @@ public class INDIServer extends DefaultINDIServer {
      * Starts the listening thread.
      */
     @Override
-    protected void startListeningToClients() {
+    public void startListeningToClients() {
         if (isServerRunning()) {
             throw new ConnectionError("Server already started!", ConnectionError.Type.ALREADY_STARTED);
 
@@ -214,7 +184,7 @@ public class INDIServer extends DefaultINDIServer {
      * clients are also broken.
      */
     @Override
-    protected void stopServer() {
+    public void stopServer() {
         if (isServerRunning()) {
             super.stopServer();
 
@@ -224,10 +194,10 @@ public class INDIServer extends DefaultINDIServer {
     }
 
     /**
-     * Connects to another Server.
+     * Connects to another server.
      *
-     * @param host The host of the other derver.
-     * @param port The port of the other derver.
+     * @param host The host of the other server.
+     * @param port The port of the other server.
      * @see #disconnect
      */
     public void connect(String host, int port) {
@@ -284,15 +254,13 @@ public class INDIServer extends DefaultINDIServer {
     }
 
     /**
-     * Accepts the client if it is 127.0.0.1 (localhost).
+     * Accepts all the clients.
      *
-     * @param socket
-     * @return <code>true</code> if it is the 127.0.0.1 host.
+     * @param socket a client
+     * @return {@code true}
      */
     @Override
     protected boolean acceptClient(Socket socket) {
-        //TODO(squareboot): implement this
-        byte[] address = socket.getInetAddress().getAddress();
-        return (address[0] == 127) && (address[1] == 0) && (address[2] == 0) && (address[3] == 1);
+        return true;
     }
 }
