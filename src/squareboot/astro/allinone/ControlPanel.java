@@ -47,10 +47,6 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      */
     private JSpinner indiPortField;
     /**
-     * Button to refresh the list of serial ports
-     */
-    private JButton refreshButton;
-    /**
      * Button to add a new digital pin.
      */
     private JButton addDigitalPinButton;
@@ -75,17 +71,13 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      */
     private Timer refresher = new Timer("Serial ports refresher");
     /**
-     * @see Main#getSettings()
-     */
-    private Settings settings;
-    /**
      * Model for the list of digital pins.
      */
-    private DefaultListModel<AbstractPinPanel> digitalPinsModel = new DefaultListModel<>();
+    private DefaultListModel<AbstractPinPanel> digitalPinsModel;
     /**
      * Model for the list of PWM pins.
      */
-    private DefaultListModel<AbstractPinPanel> pwmPinsModel = new DefaultListModel<>();
+    private DefaultListModel<AbstractPinPanel> pwmPinsModel;
 
     /**
      * Class constructor.
@@ -96,17 +88,20 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         setContentPane(parent);
         setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
 
-        settings = Main.getSettings();
-
         serialPorts = Arduino.listAvailablePorts();
         for (String p : serialPorts) {
             portsComboBox.addItem(p);
         }
-        refreshButton.addActionListener(e -> refreshPorts());
         refresher.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                refreshPorts();
+                ArrayList<String> newPorts = Arduino.listAvailablePorts();
+                if (!newPorts.equals(serialPorts)) {
+                    portsComboBox.removeAllItems();
+                    for (String p : serialPorts) {
+                        portsComboBox.addItem(p);
+                    }
+                }
             }
         }, 1000, 1000);
 
@@ -116,6 +111,7 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         });
         okButton.addActionListener(e -> {
             System.out.println("Saving user input...");
+            Settings settings = Main.getSettings();
             settings.setUsbPort((String) portsComboBox.getSelectedItem());
             settings.setIndiPort((int) indiPortField.getValue());
             settings.save();
@@ -123,7 +119,7 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             onOk();
         });
 
-        portsComboBox.setSelectedItem(settings.getUsbPort());
+        portsComboBox.setSelectedItem(Main.getSettings().getUsbPort());
 
         addDigitalPinButton.addActionListener(this);
         removeDigitalPinButton.addActionListener(this);
@@ -140,26 +136,15 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         refresher.cancel();
     }
 
-    /**
-     * Refreshes all the serial ports.
-     */
-    private void refreshPorts() {
-        ArrayList<String> newPorts = Arduino.listAvailablePorts();
-        if (!newPorts.equals(serialPorts)) {
-            portsComboBox.removeAllItems();
-            for (String p : serialPorts) {
-                portsComboBox.addItem(p);
-            }
-        }
-    }
-
     private void createUIComponents() {
-        indiPortField = new JSpinner(new SpinnerNumberModel(settings.getIndiPort(), 10, 99999, 1));
+        indiPortField = new JSpinner(new SpinnerNumberModel(Main.getSettings().getIndiPort(), 10, 99999, 1));
+        digitalPinsModel = new DefaultListModel<>();
         digitalPinsList = new JList<>(digitalPinsModel);
         digitalPinsList.setLayoutOrientation(JList.VERTICAL);
         digitalPinsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         digitalPinsList.setCellRenderer(new PinPanelRenderer());
-        pwmPinsList = new JList<>(digitalPinsModel);
+        pwmPinsModel = new DefaultListModel<>();
+        pwmPinsList = new JList<>(pwmPinsModel);
         pwmPinsList.setLayoutOrientation(JList.VERTICAL);
         pwmPinsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         pwmPinsList.setCellRenderer(new PinPanelRenderer());
@@ -168,6 +153,7 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
+        Settings settings = Main.getSettings();
         if (source == addDigitalPinButton) {
             ArduinoPin pin = askNewPin();
             if (pin != null) {
