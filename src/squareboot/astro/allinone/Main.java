@@ -3,8 +3,8 @@ package squareboot.astro.allinone;
 import org.apache.commons.cli.*;
 import squareboot.astro.allinone.indi.INDIArduinoDriver;
 import squareboot.astro.allinone.indi.INDIServer;
-import squareboot.astro.allinone.io.Arduino;
-import squareboot.astro.allinone.io.SerialMessageListener;
+import squareboot.astro.allinone.io.SerialPortMultiplexer;
+import squareboot.astro.allinone.io.SimpleSerialPort;
 
 import javax.swing.*;
 import java.awt.*;
@@ -36,17 +36,14 @@ public class Main {
      */
     private static INDIServer server;
     /**
-     * Socat.
+     * Serial port multiplexer.
      */
-    private static SocatRunner socat;
-    /**
-     * Run to close the system tray.
-     */
-    private static Runnable disposeTray;
+    private static SerialPortMultiplexer multiplexer;
     /**
      * Do not show the control panel.
      */
     private static boolean noControlPanel = false;
+    private static SplashScreen splash;
 
     static {
         try {
@@ -77,6 +74,8 @@ public class Main {
      * Main. Configures the L&F and starts the application.
      */
     public static void main(String[] args) {
+        splash = new SplashScreen();
+
         CommandLineParser parser = new DefaultParser();
 
         Options options = new Options();
@@ -138,21 +137,25 @@ public class Main {
             start();
 
         } else {
-            SwingUtilities.invokeLater(() -> new ControlPanel() {
-                @Override
-                protected void onOk() {
-                    start();
-                }
+            SwingUtilities.invokeLater(() -> {
+                splash.setVisible(false);
+                new ControlPanel() {
+                    @Override
+                    protected void onOk() {
+                        start();
+                    }
 
-                @Override
-                protected void onCancel() {
-                    exit();
-                }
+                    @Override
+                    protected void onCancel() {
+                        exit();
+                    }
+                };
             });
         }
     }
 
     private static void start() {
+        splash.setVisible(true);
         System.out.println("Starting server...");
         server = new INDIServer(settings.getIndiPort());
         try {
@@ -168,7 +171,7 @@ public class Main {
 
         System.out.println("Loading Arduino driver...");
         server.loadJava(INDIArduinoDriver.class);
-        Arduino realArduino = new Arduino(settings.getUsbPort());
+        SimpleSerialPort realArduino = new SimpleSerialPort(settings.getUsbPort());
         INDIArduinoDriver arduinoDriver = INDIArduinoDriver.getInstance();
         if (arduinoDriver == null) {
             System.err.println("Due to unknown reasons, the Arduino driver could not be loaded!");
@@ -177,56 +180,22 @@ public class Main {
         }
         arduinoDriver.init(realArduino, settings.getDigitalPins().toArray(), settings.getPwmPins().toArray());
 
-        System.out.println("Loading port forwarder (socat)...");
-        socat = new SocatRunner();
-        Thread thread = new Thread(socat);
-        thread.start();
-        // Wait for process to start
         try {
-            long startTime = System.currentTimeMillis();
-            while ((!socat.isReady()) && (System.currentTimeMillis() - startTime < 1000)) {
-                Thread.sleep(50);
-            }
+            System.out.println("Loading port forwarder (socat)...");
+            multiplexer = new SerialPortMultiplexer(realArduino);
 
-        } catch (InterruptedException ignored) {
-
-        }
-        if (!socat.isReady()) {
+        } catch (IllegalStateException e) {
             System.err.println("socat error!");
-            exit(ExitCodes.SOCAT_ERROR);
+            Main.exit(Main.ExitCodes.SOCAT_ERROR);
         }
-        Arduino mockedArduino = new Arduino(socat.getPort1());
-        mockedArduino.addListener(new SerialMessageListener() {
-            @Override
-            public void onMessage(String msg) {
-                System.out.println("mockedArduino.onMessage(" + msg + ")");
-                realArduino.send(msg);
-            }
 
-            @Override
-            public void onConnectionError(Exception e) {
-                e.printStackTrace();
-            }
-        });
-        realArduino.addListener(new SerialMessageListener() {
-            @Override
-            public void onMessage(String msg) {
-                System.out.println("realArduino.onMessage(" + msg + ")");
-                mockedArduino.send(msg);
-            }
-
-            @Override
-            public void onConnectionError(Exception e) {
-                e.printStackTrace();
-            }
-        });
-
-        System.out.println("Loading focuser driver (MoonLite)...");
         server.loadNative("indi_moonlite_focus");
 
         System.out.println("Starting status window...");
-        SwingUtilities.invokeLater(() -> new ServerMiniWindow(socat.getPort2()));
-        System.out.println("Done!");
+        SwingUtilities.invokeLater(() -> {
+            splash.dispose();
+            new ServerMiniWindow(multiplexer.getMockedPort());
+        });
     }
 
     /**
@@ -238,9 +207,6 @@ public class Main {
         System.out.println("Bye!");
         if (server != null && server.isServerRunning()) {
             server.stopServer();
-        }
-        if (disposeTray != null) {
-            disposeTray.run();
         }
         System.exit(code);
     }

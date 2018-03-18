@@ -61,8 +61,8 @@ public class SocatRunner implements Runnable {
     /**
      * @return {@code true} if both the ports have been initialized.
      */
-    public boolean isReady() {
-        return (port1 != null) && (port2 != null);
+    public boolean isNotReady() {
+        return (port1 == null) || (port2 == null);
     }
 
     /**

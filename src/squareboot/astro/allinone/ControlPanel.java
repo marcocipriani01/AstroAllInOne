@@ -1,6 +1,6 @@
 package squareboot.astro.allinone;
 
-import squareboot.astro.allinone.io.Arduino;
+import squareboot.astro.allinone.io.GenericSerialPort;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
@@ -99,7 +99,7 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             }
         });
 
-        for (String p : Arduino.listAvailablePorts()) {
+        for (String p : GenericSerialPort.listAvailablePorts()) {
             portsComboBox.addItem(p);
         }
         refresher.scheduleAtFixedRate(new TimerTask() {
@@ -108,7 +108,7 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
                 boolean popupVisible = portsComboBox.isPopupVisible();
                 String selectedItem = (String) portsComboBox.getSelectedItem();
                 portsComboBox.removeAllItems();
-                for (String p : Arduino.listAvailablePorts()) {
+                for (String p : GenericSerialPort.listAvailablePorts()) {
                     portsComboBox.addItem(p);
                 }
                 if (popupVisible) {
@@ -141,7 +141,7 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         removePwmPinButton.addActionListener(this);
         editPwmPinButton.addActionListener(this);
 
-        setBounds(200, 150, 700, 650);
+        setBounds(200, 150, 650, 550);
         setVisible(true);
     }
 

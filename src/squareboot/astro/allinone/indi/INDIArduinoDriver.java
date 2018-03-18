@@ -6,8 +6,8 @@ import laazotea.indi.Constants.PropertyStates;
 import laazotea.indi.INDIException;
 import laazotea.indi.driver.*;
 import squareboot.astro.allinone.ArduinoPin;
-import squareboot.astro.allinone.io.Arduino;
 import squareboot.astro.allinone.io.ConnectionError;
+import squareboot.astro.allinone.io.GenericSerialPort;
 
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -35,7 +35,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     /**
      * The board to control.
      */
-    private Arduino arduino;
+    private GenericSerialPort serialPort;
     // The properties and elements of this driver
     /**
      * All the properties used by digital pins.
@@ -62,14 +62,14 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     }
 
     /**
-     * @param arduino    an Arduino board. Must be already connected.
+     * @param serialPort an Arduino board. Must be already connected.
      * @param switchPins a list of digital pins (on/off only).
      * @param pwmPins    a list of PWM-capable pins.
      */
-    public void init(Arduino arduino, ArduinoPin[] switchPins, ArduinoPin[] pwmPins) {
-        this.arduino = arduino;
+    public void init(GenericSerialPort serialPort, ArduinoPin[] switchPins, ArduinoPin[] pwmPins) {
+        this.serialPort = serialPort;
         // Restart the board to ensure that all the pins are turned off.
-        arduino.send(":RS#");
+        serialPort.print(":RS#");
 
         // Look for duplicated pins
         LinkedHashSet<Integer> checker = new LinkedHashSet<>();
@@ -104,10 +104,10 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
      * @param pin the pin ID.
      */
     public void updatePin(ArduinoPin pin) {
-        if (!arduino.isConnected()) {
+        if (!serialPort.isConnected()) {
             throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
         }
-        arduino.send(":AV" + String.format("%02d", pin.getPin()) + String.format("%03d", pin.getValue()) + "#");
+        serialPort.print(":AV" + String.format("%02d", pin.getPin()) + String.format("%03d", pin.getValue()) + "#");
     }
 
     /**
