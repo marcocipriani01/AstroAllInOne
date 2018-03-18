@@ -70,6 +70,7 @@ public class SocatRunner implements Runnable {
      */
     public void stop() {
         process.destroy();
+        System.out.println("socat stopped!");
     }
 
     /**

@@ -1,5 +1,8 @@
 package squareboot.astro.allinone;
 
+import com.google.gson.annotations.Expose;
+import com.google.gson.annotations.SerializedName;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -10,6 +13,8 @@ import java.util.Arrays;
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class PinArray {
 
+    @SerializedName("List")
+    @Expose
     private ArrayList<ArduinoPin> list;
 
     /**

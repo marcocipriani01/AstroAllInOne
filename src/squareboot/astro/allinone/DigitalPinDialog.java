@@ -10,7 +10,7 @@ import javax.swing.text.DefaultFormatter;
  * @version 0.1
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class DigitalPinPanel extends AbstractPinPanel {
+public class DigitalPinDialog extends AbstractPinDialog {
 
     /**
      * The panel.
@@ -34,11 +34,10 @@ public class DigitalPinPanel extends AbstractPinPanel {
      *
      * @param pin a pin.
      */
-    public DigitalPinPanel(ArduinoPin pin) {
-        super(pin);
+    public DigitalPinDialog(JFrame frame, ArduinoPin pin) {
+        super(frame, pin);
+        setContentPane(parent);
 
-        ((DefaultFormatter) ((JFormattedTextField) pinSpinner.getEditor().getComponent(0)).getFormatter())
-                .setCommitsOnValidEdit(true);
         pinSpinner.addChangeListener(e -> pin.setPin((int) pinSpinner.getValue()));
         pinSpinner.setValue(pin.getPin());
 
@@ -66,17 +65,15 @@ public class DigitalPinPanel extends AbstractPinPanel {
 
         stateCheckBox.addActionListener(e -> pin.setValue(stateCheckBox.isSelected() ? 255 : 0));
         stateCheckBox.setSelected(pin.getValue() == 255);
-    }
 
-    /**
-     * @return the {@link JPanel} represented by this object.
-     */
-    @Override
-    public JPanel getPanel() {
-        return parent;
+        setLocation(250, 250);
+        pack();
+        setVisible(true);
     }
 
     private void createUIComponents() {
         pinSpinner = new JSpinner(new SpinnerNumberModel(13, 2, 99, 1));
+        ((DefaultFormatter) ((JFormattedTextField) pinSpinner.getEditor().getComponent(0)).getFormatter())
+                .setCommitsOnValidEdit(true);
     }
 }

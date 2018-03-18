@@ -3,7 +3,6 @@ package squareboot.astro.allinone.io;
 import jssc.*;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 
 /**
  * Manager for serial ports with listeners.
@@ -69,10 +68,10 @@ public class Arduino implements SerialPortEventListener {
     /**
      * Serial ports discovery.
      *
-     * @return an {@code ArrayList<CommPortIdentifier>} containing all the available and not busy ports.
+     * @return an array containing all the available and not busy ports.
      */
-    public static ArrayList<String> listAvailablePorts() {
-        return new ArrayList<>(Arrays.asList(SerialPortList.getPortNames()));
+    public static String[] listAvailablePorts() {
+        return SerialPortList.getPortNames();
     }
 
     /**
@@ -165,7 +164,7 @@ public class Arduino implements SerialPortEventListener {
      *
      * @param message the message you want to send.
      */
-    public void println(String message) {
+    public void send(String message) {
         new Thread(() -> {
             try {
                 if (!serialPort.writeBytes(message.getBytes())) {
@@ -182,7 +181,7 @@ public class Arduino implements SerialPortEventListener {
                     }
 
                     case SerialPortException.TYPE_PORT_NOT_OPENED: {
-                        type = ConnectionError.Type.IO;
+                        type = ConnectionError.Type.NOT_CONNECTED;
                         break;
                     }
 
@@ -211,8 +210,8 @@ public class Arduino implements SerialPortEventListener {
      *
      * @param number the message you want to send.
      */
-    public void println(int number) {
-        println(String.valueOf(number));
+    public void send(int number) {
+        send(String.valueOf(number));
     }
 
     /**
@@ -220,8 +219,8 @@ public class Arduino implements SerialPortEventListener {
      *
      * @param c the char you want to send.
      */
-    public void println(char c) {
-        println(String.valueOf(c));
+    public void send(char c) {
+        send(String.valueOf(c));
     }
 
     /**
@@ -229,8 +228,8 @@ public class Arduino implements SerialPortEventListener {
      *
      * @param d the number you want to send.
      */
-    public void println(double d) {
-        println(String.valueOf(d));
+    public void send(double d) {
+        send(String.valueOf(d));
     }
 
     /**

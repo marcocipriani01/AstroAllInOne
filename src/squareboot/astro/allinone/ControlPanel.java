@@ -5,7 +5,8 @@ import squareboot.astro.allinone.io.Arduino;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -25,11 +26,11 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
     /**
      * The list of digital pins.
      */
-    private JList<AbstractPinPanel> digitalPinsList;
+    private JList<ArduinoPin> digitalPinsList;
     /**
      * The list of PWM pins.
      */
-    private JList<AbstractPinPanel> pwmPinsList;
+    private JList<ArduinoPin> pwmPinsList;
     /**
      * Save button.
      */
@@ -63,9 +64,13 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      */
     private JButton removePwmPinButton;
     /**
-     * List of available serial ports.
+     * Button to edit the selected digital pin.
      */
-    private ArrayList<String> serialPorts;
+    private JButton editDigitalPinButton;
+    /**
+     * Button to edit the selected PWM pin.
+     */
+    private JButton editPwmPinButton;
     /**
      * Timer to refresh the list of available serial ports.
      */
@@ -73,11 +78,11 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
     /**
      * Model for the list of digital pins.
      */
-    private DefaultListModel<AbstractPinPanel> digitalPinsModel;
+    private DefaultListModel<ArduinoPin> digitalPinsModel;
     /**
      * Model for the list of PWM pins.
      */
-    private DefaultListModel<AbstractPinPanel> pwmPinsModel;
+    private DefaultListModel<ArduinoPin> pwmPinsModel;
 
     /**
      * Class constructor.
@@ -86,24 +91,32 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         super(Main.APP_NAME + " control panel");
         setIconImage(Main.logo);
         setContentPane(parent);
-        setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent windowEvent) {
+                onCancel();
+            }
+        });
 
-        serialPorts = Arduino.listAvailablePorts();
-        for (String p : serialPorts) {
+        for (String p : Arduino.listAvailablePorts()) {
             portsComboBox.addItem(p);
         }
         refresher.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                ArrayList<String> newPorts = Arduino.listAvailablePorts();
-                if (!newPorts.equals(serialPorts)) {
-                    portsComboBox.removeAllItems();
-                    for (String p : serialPorts) {
-                        portsComboBox.addItem(p);
-                    }
+                boolean popupVisible = portsComboBox.isPopupVisible();
+                String selectedItem = (String) portsComboBox.getSelectedItem();
+                portsComboBox.removeAllItems();
+                for (String p : Arduino.listAvailablePorts()) {
+                    portsComboBox.addItem(p);
                 }
+                if (popupVisible) {
+                    SwingUtilities.invokeLater(() -> portsComboBox.showPopup());
+                }
+                portsComboBox.setSelectedItem(selectedItem);
             }
-        }, 1000, 1000);
+        }, 2500, 2500);
 
         cancelButton.addActionListener(e -> {
             dispose();
@@ -123,10 +136,12 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
 
         addDigitalPinButton.addActionListener(this);
         removeDigitalPinButton.addActionListener(this);
+        editDigitalPinButton.addActionListener(this);
         addPwmPinButton.addActionListener(this);
         removePwmPinButton.addActionListener(this);
+        editPwmPinButton.addActionListener(this);
 
-        setBounds(200, 150, 650, 550);
+        setBounds(200, 150, 700, 650);
         setVisible(true);
     }
 
@@ -137,17 +152,34 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
     }
 
     private void createUIComponents() {
-        indiPortField = new JSpinner(new SpinnerNumberModel(Main.getSettings().getIndiPort(), 10, 99999, 1));
+        Settings settings = Main.getSettings();
+        indiPortField = new JSpinner(new SpinnerNumberModel(settings.getIndiPort(), 10, 99999, 1));
+
         digitalPinsModel = new DefaultListModel<>();
+        for (ArduinoPin pin : settings.getDigitalPins().toArray()) {
+            digitalPinsModel.addElement(pin);
+        }
         digitalPinsList = new JList<>(digitalPinsModel);
         digitalPinsList.setLayoutOrientation(JList.VERTICAL);
         digitalPinsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        digitalPinsList.setCellRenderer(new PinPanelRenderer());
+        digitalPinsList.getSelectionModel().addListSelectionListener(e -> {
+            boolean b = !((ListSelectionModel) e.getSource()).isSelectionEmpty();
+            removeDigitalPinButton.setEnabled(b);
+            editDigitalPinButton.setEnabled(b);
+        });
+
         pwmPinsModel = new DefaultListModel<>();
+        for (ArduinoPin pin : settings.getPwmPins().toArray()) {
+            pwmPinsModel.addElement(pin);
+        }
         pwmPinsList = new JList<>(pwmPinsModel);
         pwmPinsList.setLayoutOrientation(JList.VERTICAL);
         pwmPinsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        pwmPinsList.setCellRenderer(new PinPanelRenderer());
+        pwmPinsList.getSelectionModel().addListSelectionListener(e -> {
+            boolean b = !((ListSelectionModel) e.getSource()).isSelectionEmpty();
+            removePwmPinButton.setEnabled(b);
+            editPwmPinButton.setEnabled(b);
+        });
     }
 
     @Override
@@ -158,25 +190,31 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             ArduinoPin pin = askNewPin();
             if (pin != null) {
                 settings.getDigitalPins().add(pin);
-                digitalPinsModel.addElement(new DigitalPinPanel(pin));
+                digitalPinsModel.addElement(pin);
             }
 
         } else if (source == removeDigitalPinButton) {
-            AbstractPinPanel item = digitalPinsList.getSelectedValue();
+            ArduinoPin item = digitalPinsList.getSelectedValue();
             digitalPinsModel.removeElement(item);
-            settings.getDigitalPins().remove(item.getArduinoPin());
+            settings.getDigitalPins().remove(item);
+
+        } else if (source == editDigitalPinButton) {
+            new DigitalPinDialog(this, digitalPinsList.getSelectedValue());
 
         } else if (source == addPwmPinButton) {
             ArduinoPin pin = askNewPin();
             if (pin != null) {
                 settings.getPwmPins().add(pin);
-                pwmPinsModel.addElement(new PwmPinPanel(pin));
+                pwmPinsModel.addElement(pin);
             }
 
         } else if (source == removePwmPinButton) {
-            AbstractPinPanel item = pwmPinsList.getSelectedValue();
+            ArduinoPin item = pwmPinsList.getSelectedValue();
             pwmPinsModel.removeElement(item);
-            settings.getPwmPins().remove(item.getArduinoPin());
+            settings.getPwmPins().remove(item);
+
+        } else if (source == editPwmPinButton) {
+            new PwmPinDialog(this, pwmPinsList.getSelectedValue());
         }
     }
 

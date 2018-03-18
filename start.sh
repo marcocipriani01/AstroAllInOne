@@ -42,4 +42,4 @@ fi
 dataDir="$HOME/.config/AstroAllInOne"
 mkdir -p "$dataDir"
 
-java -jar "$installDir" "--data-dir=$dataDir" "-p=7625"
+java -jar "$installDir" "--data-dir=$dataDir"

@@ -69,7 +69,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     public void init(Arduino arduino, ArduinoPin[] switchPins, ArduinoPin[] pwmPins) {
         this.arduino = arduino;
         // Restart the board to ensure that all the pins are turned off.
-        arduino.println(":RS#");
+        arduino.send(":RS#");
 
         // Look for duplicated pins
         LinkedHashSet<Integer> checker = new LinkedHashSet<>();
@@ -107,7 +107,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
         if (!arduino.isConnected()) {
             throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
         }
-        arduino.println(":AV" + String.format("%02d", pin.getPin()) + String.format("%03d", pin.getValue()) + "#");
+        arduino.send(":AV" + String.format("%02d", pin.getPin()) + String.format("%03d", pin.getValue()) + "#");
     }
 
     /**
@@ -174,12 +174,14 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
 
     @Override
     public void driverConnect(Date timestamp) {
+        System.err.println("Driver connection");
         addProperty(digitalPinProps);
         addProperty(pwmPinsProp);
     }
 
     @Override
     public void driverDisconnect(Date timestamp) {
+        System.err.println("Driver disconnection");
         removeProperty(digitalPinProps);
         removeProperty(pwmPinsProp);
     }

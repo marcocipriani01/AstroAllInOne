@@ -1,13 +1,14 @@
 package squareboot.astro.allinone;
 
 import javax.swing.*;
+import java.awt.*;
 
 /**
  * @author SquareBoot
  * @version 0.1
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public abstract class AbstractPinPanel {
+public abstract class AbstractPinDialog extends JDialog {
 
     /**
      * A pin.
@@ -19,7 +20,9 @@ public abstract class AbstractPinPanel {
      *
      * @param pin a pin.
      */
-    public AbstractPinPanel(ArduinoPin pin) {
+    public AbstractPinDialog(JFrame frame, ArduinoPin pin) {
+        super(frame, "Pin editor", Dialog.ModalityType.DOCUMENT_MODAL);
+        setIconImage(Main.logo);
         this.pin = pin;
     }
 
@@ -29,9 +32,4 @@ public abstract class AbstractPinPanel {
     public ArduinoPin getArduinoPin() {
         return pin;
     }
-
-    /**
-     * @return the {@link JPanel} represented by this object.
-     */
-    public abstract JPanel getPanel();
 }

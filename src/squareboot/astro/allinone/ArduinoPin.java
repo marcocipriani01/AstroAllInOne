@@ -12,13 +12,13 @@ public class ArduinoPin {
 
     @Expose
     @SerializedName("Pin")
-    private int pin;
+    private int pin = -1;
     @SerializedName("Name")
     @Expose
-    private String name;
+    private String name = "A pin";
     @SerializedName("Value")
     @Expose
-    private int value;
+    private int value = 0;
 
     /**
      * Class constructor.
@@ -89,6 +89,6 @@ public class ArduinoPin {
 
     @Override
     public String toString() {
-        return "Pin " + name + " @" + pin;
+        return "Pin " + pin + ": " + name;
     }
 }
