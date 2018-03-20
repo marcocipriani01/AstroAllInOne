@@ -16,7 +16,7 @@ public class SplashScreen extends JWindow {
      * Class constructor.
      */
     public SplashScreen() {
-        this(500);
+        this(3000);
     }
 
     /**
@@ -33,11 +33,13 @@ public class SplashScreen extends JWindow {
         JLabel label = new JLabel(icon);
         getContentPane().add(label, BorderLayout.NORTH);
         setVisible(true);
-        try {
-            Thread.sleep(duration);
+        if (duration > 0) {
+            try {
+                Thread.sleep(duration);
 
-        } catch (Exception ignored) {
+            } catch (Exception ignored) {
 
+            }
         }
     }
 

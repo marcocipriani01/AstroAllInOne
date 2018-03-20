@@ -33,16 +33,17 @@ public class ArduinoPin {
     public ArduinoPin(int pin, String name, int value) {
         this.pin = pin;
         this.name = name;
-        this.value = value;
+        this.value = constrainValue(value);
     }
 
-    /**
-     * Class constructor.
-     */
-    public ArduinoPin(int pin, String name) {
-        this.pin = pin;
-        this.name = name;
-        this.value = 0;
+    @SuppressWarnings("SameParameterValue")
+    public static int percentageToPwm(int percentage) {
+        return constrainValue((int) Math.round(percentage * 2.55));
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    public static int constrainValue(int n) {
+        return (n >= 255 ? 255 : (n <= 0 ? 0 : n));
     }
 
     /**
@@ -56,7 +57,7 @@ public class ArduinoPin {
      * @param value the new value.
      */
     public void setValue(int value) {
-        this.value = value;
+        this.value = constrainValue(value);
     }
 
     /**
@@ -89,6 +90,7 @@ public class ArduinoPin {
 
     @Override
     public String toString() {
-        return "Pin " + pin + ": " + name;
+        return "Pin " + pin + " is \"" + name + "\", value: " +
+                (value == 255 ? "high" : (value == 0 ? "low" : ((int) Math.round(value / 2.55) + "%")));
     }
 }

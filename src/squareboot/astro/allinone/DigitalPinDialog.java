@@ -64,7 +64,7 @@ public class DigitalPinDialog extends AbstractPinDialog {
         nameTextField.setText(pin.getName());
 
         stateCheckBox.addActionListener(e -> pin.setValue(stateCheckBox.isSelected() ? 255 : 0));
-        stateCheckBox.setSelected(pin.getValue() == 255);
+        stateCheckBox.setSelected(pin.getValue() >= 255);
 
         setLocation(250, 250);
         pack();

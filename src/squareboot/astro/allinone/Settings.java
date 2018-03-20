@@ -76,7 +76,19 @@ public class Settings {
             return new Settings(file);
         }
         Settings s = serializer.fromJson(json.toString(), Settings.class);
+        // Normalize invalid values
+        for (ArduinoPin pin : s.digitalPins.toArray()) {
+            pin.setValue(pin.getValue() >= 255 ? 255 : 0);
+        }
+        for (ArduinoPin pin : s.pwmPins.toArray()) {
+            pin.setValue(ArduinoPin.constrainValue(pin.getValue()));
+        }
+        if (s.indiPort <= 50) {
+            s.indiPort = 7625;
+        }
+        // Save again
         s.setFile(file);
+        s.save();
         return s;
     }
 

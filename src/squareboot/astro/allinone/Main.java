@@ -3,6 +3,7 @@ package squareboot.astro.allinone;
 import org.apache.commons.cli.*;
 import squareboot.astro.allinone.indi.INDIArduinoDriver;
 import squareboot.astro.allinone.indi.INDIServer;
+import squareboot.astro.allinone.io.ConnectionError;
 import squareboot.astro.allinone.io.SerialPortMultiplexer;
 import squareboot.astro.allinone.io.SimpleSerialPort;
 
@@ -40,9 +41,16 @@ public class Main {
      */
     private static SerialPortMultiplexer multiplexer;
     /**
+     * The Arduino pin driver.
+     */
+    private static INDIArduinoDriver arduinoDriver;
+    /**
      * Do not show the control panel.
      */
-    private static boolean noControlPanel = false;
+    private static boolean noGui = false;
+    /**
+     * Splash screen.
+     */
     private static SplashScreen splash;
 
     static {
@@ -54,6 +62,14 @@ public class Main {
             System.err.println("Unable to load app image.");
             e.printStackTrace();
         }
+    }
+
+    /**
+     * @return the stored Arduino pin driver.
+     * @see INDIArduinoDriver
+     */
+    public static INDIArduinoDriver getArduinoDriver() {
+        return arduinoDriver;
     }
 
     /**
@@ -74,7 +90,7 @@ public class Main {
      * Main. Configures the L&F and starts the application.
      */
     public static void main(String[] args) {
-        splash = new SplashScreen();
+        splash = new SplashScreen(0);
 
         CommandLineParser parser = new DefaultParser();
 
@@ -87,8 +103,8 @@ public class Main {
                 "Specifies a port for the INDI server (default 7624).");
         options.addOption("a", "serial-port", true,
                 "Specifies a serial port.");
-        options.addOption("s", "direct-start", false,
-                "Starts immediately, without showing the control panel.");
+        options.addOption("n", "no-gui", false,
+                "Do not show the control panel and print error on the command line, no info messages.");
 
         try {
             CommandLine line = parser.parse(options, args);
@@ -105,6 +121,7 @@ public class Main {
             }
 
             if (line.hasOption('d')) {
+                System.out.println("Loading data...");
                 settings = Settings.load(new File(line.getOptionValue('d')));
 
             } else {
@@ -126,14 +143,14 @@ public class Main {
                 settings.setUsbPort(line.getOptionValue('s'));
             }
 
-            noControlPanel = line.hasOption('s');
+            noGui = line.hasOption('n');
 
         } catch (ParseException e) {
-            System.err.println("The given arguments are invalid!");
+            System.err.println("The given arguments are not valid!");
             exit(ExitCodes.PARSE_ERROR);
         }
 
-        if (noControlPanel) {
+        if (noGui) {
             start();
 
         } else {
@@ -155,7 +172,9 @@ public class Main {
     }
 
     private static void start() {
-        splash.setVisible(true);
+        if (!noGui) {
+            splash.setVisible(true);
+        }
         System.out.println("Starting server...");
         server = new INDIServer(settings.getIndiPort());
         try {
@@ -171,10 +190,26 @@ public class Main {
 
         System.out.println("Loading Arduino driver...");
         server.loadJava(INDIArduinoDriver.class);
-        SimpleSerialPort realArduino = new SimpleSerialPort(settings.getUsbPort());
-        INDIArduinoDriver arduinoDriver = INDIArduinoDriver.getInstance();
+        SimpleSerialPort realArduino;
+        try {
+            realArduino = new SimpleSerialPort(settings.getUsbPort());
+
+        } catch (ConnectionError e) {
+            System.err.println("Unable to connect to the given serial port!");
+            if (!noGui) {
+                JOptionPane.showMessageDialog(null, "Unable to connect to the given serial port!",
+                        APP_NAME, JOptionPane.ERROR_MESSAGE);
+            }
+            exit(ExitCodes.ARDUINO_ERROR);
+            return;
+        }
+        arduinoDriver = INDIArduinoDriver.getInstance();
         if (arduinoDriver == null) {
             System.err.println("Due to unknown reasons, the Arduino driver could not be loaded!");
+            if (!noGui) {
+                JOptionPane.showMessageDialog(null, "Due to unknown reasons, the Arduino driver could not be loaded!",
+                        APP_NAME, JOptionPane.ERROR_MESSAGE);
+            }
             exit(ExitCodes.ARDUINO_ERROR);
             return;
         }
@@ -186,15 +221,19 @@ public class Main {
 
         } catch (IllegalStateException e) {
             System.err.println("socat error!");
+            if (!noGui) {
+                JOptionPane.showMessageDialog(null, "socat error!",
+                        APP_NAME, JOptionPane.ERROR_MESSAGE);
+            }
             Main.exit(Main.ExitCodes.SOCAT_ERROR);
+            return;
         }
-
-        server.loadNative("indi_moonlite_focus");
 
         System.out.println("Starting status window...");
         SwingUtilities.invokeLater(() -> {
             splash.dispose();
-            new ServerMiniWindow(multiplexer.getMockedPort());
+            splash = null;
+            new ServerMiniWindow(multiplexer.getMockedPort(), arduinoDriver);
         });
     }
 
@@ -207,6 +246,9 @@ public class Main {
         System.out.println("Bye!");
         if (server != null && server.isServerRunning()) {
             server.stopServer();
+        }
+        if (multiplexer != null) {
+            multiplexer.stop();
         }
         System.exit(code);
     }

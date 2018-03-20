@@ -63,8 +63,14 @@ public class PwmPinDialog extends AbstractPinDialog {
         });
         nameTextField.setText(pin.getName());
 
-        valueSpinner.addChangeListener(e -> pin.setPin((int) valueSpinner.getValue()));
-        valueSpinner.setValue(pin.getValue());
+        valueSpinner.addChangeListener(e -> pin.setValue(ArduinoPin.percentageToPwm((int) valueSpinner.getValue())));
+        valueSpinner.addMouseWheelListener(e -> {
+            int rotation = e.getWheelRotation(), currentValue = (int) valueSpinner.getValue();
+            if (!(rotation < 0 && currentValue == 100) && !(rotation > 0 && currentValue == 0)) {
+                valueSpinner.setValue(currentValue - rotation);
+            }
+        });
+        valueSpinner.setValue((int) Math.round(pin.getValue() / 2.55));
 
         setLocation(250, 250);
         pack();
@@ -75,7 +81,7 @@ public class PwmPinDialog extends AbstractPinDialog {
         pinSpinner = new JSpinner(new SpinnerNumberModel(13, 2, 99, 1));
         ((DefaultFormatter) ((JFormattedTextField) pinSpinner.getEditor().getComponent(0)).getFormatter())
                 .setCommitsOnValidEdit(true);
-        valueSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 255, 1));
+        valueSpinner = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1));
         ((DefaultFormatter) ((JFormattedTextField) valueSpinner.getEditor().getComponent(0)).getFormatter())
                 .setCommitsOnValidEdit(true);
     }

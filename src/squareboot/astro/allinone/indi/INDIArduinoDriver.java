@@ -11,6 +11,7 @@ import squareboot.astro.allinone.io.GenericSerialPort;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -62,6 +63,42 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     }
 
     /**
+     * Forces the board to restart. Also cleans all the pins' values.
+     */
+    public void forceReboot() {
+        if (!serialPort.isConnected()) {
+            throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
+        }
+        printMessage("Force reboot invoked!");
+        serialPort.print(":RS#");
+        printMessage("Cleaning all the values of the map...");
+        for (INDIElement element : pinsMap.keySet()) {
+            if (element instanceof INDINumberElement) {
+                element.setValue(0.0);
+
+            } else if (element instanceof INDISwitchElement) {
+                element.setValue(Constants.SwitchStatus.OFF);
+            }
+        }
+        for (ArduinoPin pin : pinsMap.values()) {
+            pin.setValue(0);
+        }
+        try {
+            ArrayList<INDIProperty> properties = getPropertiesAsList();
+            // Avoid updating properties that haven't been added (if this driver hasn't been connected yet to a server)
+            if (properties.contains(digitalPinProps)) {
+                updateProperty(digitalPinProps);
+            }
+            if (properties.contains(pwmPinsProp)) {
+                updateProperty(pwmPinsProp);
+            }
+
+        } catch (INDIException e) {
+            e.printStackTrace();
+        }
+    }
+
+    /**
      * @param serialPort an Arduino board. Must be already connected.
      * @param switchPins a list of digital pins (on/off only).
      * @param pwmPins    a list of PWM-capable pins.
@@ -85,16 +122,18 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
 
         digitalPinProps = new INDISwitchProperty(this, "Digital pins", "Digital pins", "Control",
                 PropertyStates.OK, PropertyPermissions.RW, Constants.SwitchRules.ANY_OF_MANY);
-        for (ArduinoPin pin : pwmPins) {
+        for (ArduinoPin pin : switchPins) {
+            printMessage("onDigitalPinCreate(" + pin + ")");
             pinsMap.put(new INDISwitchElement(digitalPinProps, "Pin " + pin.getPin(),
-                    pin.getName(), Constants.SwitchStatus.OFF), pin);
+                    pin.getName(), pin.getValue() == 255 ? Constants.SwitchStatus.ON : Constants.SwitchStatus.OFF), pin);
         }
 
         pwmPinsProp = new INDINumberProperty(this, "PWM pins", "PWM pins", "Control",
                 PropertyStates.OK, PropertyPermissions.RW);
         for (ArduinoPin pin : pwmPins) {
+            printMessage("onPwmPinCreate(" + pin + ")");
             pinsMap.put(new INDINumberElement(pwmPinsProp, "PWM pin" + pin.getPin(), pin.getName(),
-                    0, 0, 255, 1, "%f"), pin);
+                    ArduinoPin.percentageToPwm(pin.getValue()), 0.0, 100.0, 1.0, "%f"), pin);
         }
     }
 
@@ -124,7 +163,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
             for (INDINumberElementAndValue eAV : elementsAndValues) {
                 INDINumberElement element = eAV.getElement();
                 ArduinoPin pin = pinsMap.get(element);
-                int newValue = eAV.getValue().intValue();
+                int newValue = ArduinoPin.percentageToPwm(eAV.getValue().intValue());
                 if (newValue != pin.getValue()) {
                     pin.setValue(newValue);
                     updatePin(pin);
@@ -174,14 +213,14 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
 
     @Override
     public void driverConnect(Date timestamp) {
-        System.err.println("Driver connection");
+        printMessage("Driver connection");
         addProperty(digitalPinProps);
         addProperty(pwmPinsProp);
     }
 
     @Override
     public void driverDisconnect(Date timestamp) {
-        System.err.println("Driver disconnection");
+        printMessage("Driver disconnection");
         removeProperty(digitalPinProps);
         removeProperty(pwmPinsProp);
     }

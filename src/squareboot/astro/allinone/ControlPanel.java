@@ -3,10 +3,7 @@ package squareboot.astro.allinone;
 import squareboot.astro.allinone.io.GenericSerialPort;
 
 import javax.swing.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -137,9 +134,25 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         addDigitalPinButton.addActionListener(this);
         removeDigitalPinButton.addActionListener(this);
         editDigitalPinButton.addActionListener(this);
+        digitalPinsList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    editDigitalPin();
+                }
+            }
+        });
         addPwmPinButton.addActionListener(this);
         removePwmPinButton.addActionListener(this);
         editPwmPinButton.addActionListener(this);
+        pwmPinsList.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (e.getClickCount() == 2) {
+                    editPwmPin();
+                }
+            }
+        });
 
         setBounds(200, 150, 650, 550);
         setVisible(true);
@@ -199,7 +212,7 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             settings.getDigitalPins().remove(item);
 
         } else if (source == editDigitalPinButton) {
-            new DigitalPinDialog(this, digitalPinsList.getSelectedValue());
+            editDigitalPin();
 
         } else if (source == addPwmPinButton) {
             ArduinoPin pin = askNewPin();
@@ -214,8 +227,18 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             settings.getPwmPins().remove(item);
 
         } else if (source == editPwmPinButton) {
-            new PwmPinDialog(this, pwmPinsList.getSelectedValue());
+            editPwmPin();
         }
+    }
+
+    private void editPwmPin() {
+        new PwmPinDialog(this, pwmPinsList.getSelectedValue());
+        pwmPinsList.repaint();
+    }
+
+    private void editDigitalPin() {
+        new DigitalPinDialog(this, digitalPinsList.getSelectedValue());
+        digitalPinsList.repaint();
     }
 
     /**

@@ -227,7 +227,17 @@ public class INDIServer extends DefaultINDIServer {
      */
     @Override
     protected void connectionWithClientBroken(INDIClient client) {
-        System.err.println("Connection with client " + client.getInetAddress() + " has been broken.");
+        printMessage("Connection with client " + client.getInetAddress() + " has been broken.");
+    }
+
+    /**
+     * Write message to the INDI console (System.err)
+     *
+     * @param message The message to be printed.
+     */
+    public void printMessage(String message) {
+        System.err.println(message);
+        System.err.flush();
     }
 
     /**
@@ -237,7 +247,7 @@ public class INDIServer extends DefaultINDIServer {
      */
     @Override
     protected void connectionWithClientEstablished(INDIClient client) {
-        System.err.println("Connection with client " + client.getInetAddress() + " established.");
+        printMessage("Connection with client " + client.getInetAddress() + " established.");
     }
 
     /**
@@ -248,7 +258,7 @@ public class INDIServer extends DefaultINDIServer {
      */
     @Override
     protected void driverDisconnected(String driverIdentifier, String[] deviceNames) {
-        System.err.println("Driver " + driverIdentifier + " has been disconnected. " +
+        printMessage("Driver " + driverIdentifier + " has been disconnected. " +
                 "The following devices have disappeared: " + Arrays.toString(deviceNames)
                 .replace("[", "").replace("]", ""));
     }

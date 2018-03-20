@@ -62,6 +62,18 @@ public class SerialPortMultiplexer {
     public void stop() {
         realSerialPort.removeListener(realSerialPortLister);
         mockedSerialPort.removeListener(mockedSerialPortListener);
+        try {
+            realSerialPort.disconnect();
+
+        } catch (ConnectionError e) {
+            e.printStackTrace();
+        }
+        try {
+            mockedSerialPort.disconnect();
+
+        } catch (ConnectionError e) {
+            e.printStackTrace();
+        }
         socat.stop();
     }
 

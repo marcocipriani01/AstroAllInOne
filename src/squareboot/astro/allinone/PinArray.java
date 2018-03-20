@@ -42,6 +42,9 @@ public class PinArray {
     }
 
     public boolean contains(ArduinoPin pin) {
+        if (pin == null) {
+            throw new NullPointerException("Null pin!");
+        }
         int param = pin.getPin();
         for (ArduinoPin ap : list) {
             if (ap.getPin() == param) {
@@ -51,8 +54,11 @@ public class PinArray {
         return false;
     }
 
-    public int indexOf(ArduinoPin o) {
-        return list.indexOf(o);
+    public int indexOf(ArduinoPin pin) {
+        if (pin == null) {
+            throw new NullPointerException("Null pin!");
+        }
+        return list.indexOf(pin);
     }
 
     public ArduinoPin[] toArray() {
@@ -60,15 +66,21 @@ public class PinArray {
         return Arrays.copyOf(array, array.length, ArduinoPin[].class);
     }
 
-    public boolean add(ArduinoPin arduinoPin) {
-        if (contains(arduinoPin)) {
+    public boolean add(ArduinoPin pin) {
+        if (pin == null) {
+            throw new NullPointerException("Null pin!");
+        }
+        if (contains(pin)) {
             throw new IllegalStateException("Pin already in list!");
         }
-        return list.add(arduinoPin);
+        return list.add(pin);
     }
 
-    public boolean remove(ArduinoPin o) {
-        return list.remove(o);
+    public void remove(ArduinoPin pin) {
+        if (pin == null) {
+            throw new NullPointerException("Null pin!");
+        }
+        list.remove(pin);
     }
 
     public void clear() {

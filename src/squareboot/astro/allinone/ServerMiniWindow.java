@@ -1,10 +1,10 @@
 package squareboot.astro.allinone;
 
+import squareboot.astro.allinone.indi.INDIArduinoDriver;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
@@ -19,13 +19,23 @@ public class ServerMiniWindow extends JFrame {
      * The parent component.
      */
     private JPanel parent;
+    /**
+     * Click to copy the virtual port of the focuser.
+     */
     private JButton copyFocuserPortToButton;
+    /**
+     * Click to exit.
+     */
     private JButton exitButton;
+    /**
+     * Click to force the Arduino reboot (pay attention! you may modify the focuser state unexpectedly!).
+     */
+    private JButton forceRebootButton;
 
     /**
      * Class constructor.
      */
-    public ServerMiniWindow(String focuserPortString) {
+    public ServerMiniWindow(String focuserPortString, INDIArduinoDriver arduinoDriver) {
         super(Main.APP_NAME);
         setIconImage(Main.logo);
         setContentPane(parent);
@@ -40,6 +50,13 @@ public class ServerMiniWindow extends JFrame {
         copyFocuserPortToButton.addActionListener(e -> {
             StringSelection toClipboard = new StringSelection(focuserPortString);
             Toolkit.getDefaultToolkit().getSystemClipboard().setContents(toClipboard, toClipboard);
+        });
+        forceRebootButton.addActionListener(e -> {
+            if (JOptionPane.showConfirmDialog(ServerMiniWindow.this,
+                    "Are you sure of rebooting Arduino? Pay attention! you may modify the focuser state unexpectedly!",
+                    Main.APP_NAME, JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
+                arduinoDriver.forceReboot();
+            }
         });
 
         pack();

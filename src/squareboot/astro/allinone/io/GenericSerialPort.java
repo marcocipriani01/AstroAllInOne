@@ -95,6 +95,7 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
     /**
      * @return a mask for this serial port.
      */
+    @SuppressWarnings("SameReturnValue")
     protected abstract int getMask();
 
     /**
