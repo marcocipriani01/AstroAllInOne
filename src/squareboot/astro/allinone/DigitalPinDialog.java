@@ -4,6 +4,8 @@ import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.text.DefaultFormatter;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author SquareBoot
@@ -61,10 +63,11 @@ public class DigitalPinDialog extends AbstractPinDialog {
                 pin.setName(nameTextField.getText());
             }
         });
+        nameTextField.addActionListener(e -> dispose());
         nameTextField.setText(pin.getName());
 
-        stateCheckBox.addActionListener(e -> pin.setValue(stateCheckBox.isSelected() ? 255 : 0));
-        stateCheckBox.setSelected(pin.getValue() >= 255);
+        stateCheckBox.addActionListener(e -> pin.setValue(PinValue.ValueType.BOOLEAN, stateCheckBox.isSelected()));
+        stateCheckBox.setSelected(pin.getValueBoolean());
 
         setLocation(250, 250);
         pack();

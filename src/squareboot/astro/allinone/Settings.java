@@ -75,13 +75,19 @@ public class Settings {
         } catch (IOException e) {
             return new Settings(file);
         }
-        Settings s = serializer.fromJson(json.toString(), Settings.class);
+        Settings s;
+        try {
+            s = serializer.fromJson(json.toString(), Settings.class);
+
+        } catch (Exception e) {
+            return new Settings(file);
+        }
         // Normalize invalid values
         for (ArduinoPin pin : s.digitalPins.toArray()) {
-            pin.setValue(pin.getValue() >= 255 ? 255 : 0);
+            pin.setValue(pin.getValueBoolean() ? 255 : 0);
         }
         for (ArduinoPin pin : s.pwmPins.toArray()) {
-            pin.setValue(ArduinoPin.constrainValue(pin.getValue()));
+            pin.setValue(pin.getValuePwm());
         }
         if (s.indiPort <= 50) {
             s.indiPort = 7625;

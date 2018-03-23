@@ -182,33 +182,38 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
      * @param message the message you want to send.
      */
     public void print(String message) {
-        new Thread(() -> {
-            try {
-                if (!serialPort.writeBytes(message.getBytes())) {
-                    notifyError(new ConnectionError("An error occurred while sending the message!",
-                            ConnectionError.Type.OUTPUT));
+        if (isConnected()) {
+            new Thread(() -> {
+                try {
+                    if (!serialPort.writeBytes(message.getBytes())) {
+                        notifyError(new ConnectionError("An error occurred while sending the message!",
+                                ConnectionError.Type.OUTPUT));
+                    }
+
+                } catch (SerialPortException e) {
+                    ConnectionError.Type type;
+                    switch (e.getExceptionType()) {
+                        case SerialPortException.TYPE_PORT_BUSY: {
+                            type = ConnectionError.Type.BUSY;
+                            break;
+                        }
+
+                        case SerialPortException.TYPE_PORT_NOT_OPENED: {
+                            type = ConnectionError.Type.NOT_CONNECTED;
+                            break;
+                        }
+
+                        default: {
+                            type = ConnectionError.Type.UNKNOWN;
+                        }
+                    }
+                    notifyError(new ConnectionError("An error occurred during data transfer!", e, type));
                 }
+            }, "Serial data sender").start();
 
-            } catch (SerialPortException e) {
-                ConnectionError.Type type;
-                switch (e.getExceptionType()) {
-                    case SerialPortException.TYPE_PORT_BUSY: {
-                        type = ConnectionError.Type.BUSY;
-                        break;
-                    }
-
-                    case SerialPortException.TYPE_PORT_NOT_OPENED: {
-                        type = ConnectionError.Type.NOT_CONNECTED;
-                        break;
-                    }
-
-                    default: {
-                        type = ConnectionError.Type.UNKNOWN;
-                    }
-                }
-                notifyError(new ConnectionError("An error occurred during data transfer!", e, type));
-            }
-        }, "Serial data sender").start();
+        } else {
+            throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
+        }
     }
 
     /**

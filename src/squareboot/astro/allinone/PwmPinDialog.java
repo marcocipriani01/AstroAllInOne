@@ -61,16 +61,17 @@ public class PwmPinDialog extends AbstractPinDialog {
                 pin.setName(nameTextField.getText());
             }
         });
+        nameTextField.addActionListener(e -> dispose());
         nameTextField.setText(pin.getName());
 
-        valueSpinner.addChangeListener(e -> pin.setValue(ArduinoPin.percentageToPwm((int) valueSpinner.getValue())));
+        valueSpinner.addChangeListener(e -> pin.setValue(PinValue.ValueType.PERCENTAGE, valueSpinner.getValue()));
         valueSpinner.addMouseWheelListener(e -> {
             int rotation = e.getWheelRotation(), currentValue = (int) valueSpinner.getValue();
             if (!(rotation < 0 && currentValue == 100) && !(rotation > 0 && currentValue == 0)) {
                 valueSpinner.setValue(currentValue - rotation);
             }
         });
-        valueSpinner.setValue((int) Math.round(pin.getValue() / 2.55));
+        valueSpinner.setValue(pin.getValuePercentage());
 
         setLocation(250, 250);
         pack();

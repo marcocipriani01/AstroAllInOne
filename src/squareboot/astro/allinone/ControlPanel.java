@@ -120,10 +120,17 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             onCancel();
         });
         okButton.addActionListener(e -> {
+            String serialPort = (String) portsComboBox.getSelectedItem();
+            int indiPort = (int) indiPortField.getValue();
+            if (indiPort < 50 || serialPort == null || serialPort.equals("")) {
+                JOptionPane.showMessageDialog(this, "Invalid input!", Main.APP_NAME,
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             System.out.println("Saving user input...");
             Settings settings = Main.getSettings();
-            settings.setUsbPort((String) portsComboBox.getSelectedItem());
-            settings.setIndiPort((int) indiPortField.getValue());
+            settings.setUsbPort(serialPort);
+            settings.setIndiPort(indiPort);
             settings.save();
             dispose();
             onOk();
@@ -247,16 +254,21 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      * @return an {@link ArduinoPin} object with the chosen pin.
      */
     private ArduinoPin askNewPin() {
-        try {
-            int parsed = Integer.valueOf(JOptionPane.showInputDialog(this, "New pin",
-                    "Control panel", JOptionPane.QUESTION_MESSAGE));
-            ArduinoPin pin = new ArduinoPin();
-            pin.setPin(parsed);
-            return pin;
+        boolean check;
+        int value = 13;
+        do {
+            try {
+                value = Integer.valueOf(JOptionPane.showInputDialog(this, "New pin",
+                        "Control panel", JOptionPane.QUESTION_MESSAGE));
+                check = false;
 
-        } catch (NullPointerException e) {
-            return null;
-        }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(this, "Invalid pin! Must be a number.",
+                        Main.APP_NAME, JOptionPane.ERROR_MESSAGE);
+                check = true;
+            }
+        } while (check);
+        return new ArduinoPin(value, "A pin");
     }
 
     /**

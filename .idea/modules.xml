@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/AstroAllInOne.iml" filepath="$PROJECT_DIR$/AstroAllInOne.iml" />
+      <module fileurl="file://$PROJECT_DIR$/I4J/I4J.iml" filepath="$PROJECT_DIR$/I4J/I4J.iml" />
     </modules>
   </component>
 </project>

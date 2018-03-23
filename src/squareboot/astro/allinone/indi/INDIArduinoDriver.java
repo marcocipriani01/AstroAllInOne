@@ -6,6 +6,7 @@ import laazotea.indi.Constants.PropertyStates;
 import laazotea.indi.INDIException;
 import laazotea.indi.driver.*;
 import squareboot.astro.allinone.ArduinoPin;
+import squareboot.astro.allinone.PinValue;
 import squareboot.astro.allinone.io.ConnectionError;
 import squareboot.astro.allinone.io.GenericSerialPort;
 
@@ -63,42 +64,6 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     }
 
     /**
-     * Forces the board to restart. Also cleans all the pins' values.
-     */
-    public void forceReboot() {
-        if (!serialPort.isConnected()) {
-            throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
-        }
-        printMessage("Force reboot invoked!");
-        serialPort.print(":RS#");
-        printMessage("Cleaning all the values of the map...");
-        for (INDIElement element : pinsMap.keySet()) {
-            if (element instanceof INDINumberElement) {
-                element.setValue(0.0);
-
-            } else if (element instanceof INDISwitchElement) {
-                element.setValue(Constants.SwitchStatus.OFF);
-            }
-        }
-        for (ArduinoPin pin : pinsMap.values()) {
-            pin.setValue(0);
-        }
-        try {
-            ArrayList<INDIProperty> properties = getPropertiesAsList();
-            // Avoid updating properties that haven't been added (if this driver hasn't been connected yet to a server)
-            if (properties.contains(digitalPinProps)) {
-                updateProperty(digitalPinProps);
-            }
-            if (properties.contains(pwmPinsProp)) {
-                updateProperty(pwmPinsProp);
-            }
-
-        } catch (INDIException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
      * @param serialPort an Arduino board. Must be already connected.
      * @param switchPins a list of digital pins (on/off only).
      * @param pwmPins    a list of PWM-capable pins.
@@ -125,7 +90,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
         for (ArduinoPin pin : switchPins) {
             printMessage("onDigitalPinCreate(" + pin + ")");
             pinsMap.put(new INDISwitchElement(digitalPinProps, "Pin " + pin.getPin(),
-                    pin.getName(), pin.getValue() == 255 ? Constants.SwitchStatus.ON : Constants.SwitchStatus.OFF), pin);
+                    pin.getName(), pin.getValueIndi()), pin);
         }
 
         pwmPinsProp = new INDINumberProperty(this, "PWM pins", "PWM pins", "Control",
@@ -133,7 +98,43 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
         for (ArduinoPin pin : pwmPins) {
             printMessage("onPwmPinCreate(" + pin + ")");
             pinsMap.put(new INDINumberElement(pwmPinsProp, "PWM pin" + pin.getPin(), pin.getName(),
-                    ArduinoPin.percentageToPwm(pin.getValue()), 0.0, 100.0, 1.0, "%f"), pin);
+                    (double) pin.getValuePercentage(), 0.0, 100.0, 1.0, "%f"), pin);
+        }
+    }
+
+    /**
+     * Forces the board to restart. Also cleans all the pins' values.
+     */
+    public void forceReboot() {
+        if (!serialPort.isConnected()) {
+            throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
+        }
+        printMessage("Force reboot invoked!");
+        serialPort.print(":RS#");
+        printMessage("Cleaning all the values of the map...");
+        for (INDIElement element : pinsMap.keySet()) {
+            if (element instanceof INDINumberElement) {
+                element.setValue(0.0);
+
+            } else if (element instanceof INDISwitchElement) {
+                element.setValue(Constants.SwitchStatus.OFF);
+            }
+        }
+        for (ArduinoPin pin : pinsMap.values()) {
+            pin.setPinVal(new PinValue());
+        }
+        try {
+            ArrayList<INDIProperty> properties = getPropertiesAsList();
+            // Avoid updating properties that haven't been added (if this driver hasn't been connected yet to a server)
+            if (properties.contains(digitalPinProps)) {
+                updateProperty(digitalPinProps);
+            }
+            if (properties.contains(pwmPinsProp)) {
+                updateProperty(pwmPinsProp);
+            }
+
+        } catch (INDIException e) {
+            e.printStackTrace();
         }
     }
 
@@ -143,10 +144,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
      * @param pin the pin ID.
      */
     public void updatePin(ArduinoPin pin) {
-        if (!serialPort.isConnected()) {
-            throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
-        }
-        serialPort.print(":AV" + String.format("%02d", pin.getPin()) + String.format("%03d", pin.getValue()) + "#");
+        serialPort.print(":AV" + String.format("%02d", pin.getPin()) + String.format("%03d", pin.getValuePwm()) + "#");
     }
 
     /**
@@ -163,9 +161,10 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
             for (INDINumberElementAndValue eAV : elementsAndValues) {
                 INDINumberElement element = eAV.getElement();
                 ArduinoPin pin = pinsMap.get(element);
-                int newValue = ArduinoPin.percentageToPwm(eAV.getValue().intValue());
-                if (newValue != pin.getValue()) {
-                    pin.setValue(newValue);
+                PinValue newValue = new PinValue(PinValue.ValueType.PERCENTAGE, eAV.getValue().intValue());
+                if (!newValue.equals(pin.getPinVal())) {
+                    pin.setPinVal(newValue);
+                    element.setValue((double) pin.getValuePercentage());
                     updatePin(pin);
                 }
             }
@@ -195,9 +194,10 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
             for (INDISwitchElementAndValue eAV : elementsAndValues) {
                 INDISwitchElement element = eAV.getElement();
                 ArduinoPin pin = pinsMap.get(element);
-                int newValue = eAV.getValue() == Constants.SwitchStatus.ON ? 255 : 0;
-                if (newValue != pin.getValue()) {
-                    pin.setValue(newValue);
+                PinValue newValue = new PinValue(PinValue.ValueType.INDI, eAV.getValue());
+                if (!newValue.equals(pin.getPinVal())) {
+                    pin.setPinVal(newValue);
+                    element.setValue(newValue.getValueIndi());
                     updatePin(pin);
                 }
             }

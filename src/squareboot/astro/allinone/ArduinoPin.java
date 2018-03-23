@@ -2,6 +2,9 @@ package squareboot.astro.allinone;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
+import laazotea.indi.Constants;
+
+import java.util.Objects;
 
 /**
  * @author SquareBoot
@@ -18,10 +21,10 @@ public class ArduinoPin {
     private String name = "A pin";
     @SerializedName("Value")
     @Expose
-    private int value = 0;
+    private PinValue value = new PinValue();
 
     /**
-     * Class constructor.
+     * Class constructor. For Gson only!
      */
     public ArduinoPin() {
 
@@ -30,34 +33,65 @@ public class ArduinoPin {
     /**
      * Class constructor.
      */
-    public ArduinoPin(int pin, String name, int value) {
+    public ArduinoPin(int pin, String name) {
         this.pin = pin;
-        this.name = name;
-        this.value = constrainValue(value);
+        if (name != null) {
+            this.name = name;
+        }
     }
 
-    @SuppressWarnings("SameParameterValue")
-    public static int percentageToPwm(int percentage) {
-        return constrainValue((int) Math.round(percentage * 2.55));
+    /**
+     * Class constructor.
+     */
+    public ArduinoPin(int pin, String name, PinValue value) {
+        this(pin, name);
+        this.value = Objects.requireNonNull(value, "Null pin value!");
     }
 
-    @SuppressWarnings("SameParameterValue")
-    public static int constrainValue(int n) {
-        return (n >= 255 ? 255 : (n <= 0 ? 0 : n));
+    /**
+     * Class constructor.
+     */
+    public ArduinoPin(int pin, String name, int value) {
+        this(pin, name);
+        this.value = new PinValue(value);
+    }
+
+    public int getValuePwm() {
+        return value.getValuePwm();
+    }
+
+    public boolean getValueBoolean() {
+        return value.getValueBoolean();
+    }
+
+    public int getValuePercentage() {
+        return value.getValuePercentage();
+    }
+
+    public Constants.SwitchStatus getValueIndi() {
+        return value.getValueIndi();
+    }
+
+    public void setValue(PinValue.ValueType type, Object value) {
+        this.value.setValue(type, value);
+    }
+
+    public void setValue(int value) {
+        this.value.setValue(value);
     }
 
     /**
      * @return the stored value of the pin.
      */
-    public int getValue() {
+    public PinValue getPinVal() {
         return value;
     }
 
     /**
      * @param value the new value.
      */
-    public void setValue(int value) {
-        this.value = constrainValue(value);
+    public void setPinVal(PinValue value) {
+        this.value = Objects.requireNonNull(value);
     }
 
     /**
@@ -85,12 +119,11 @@ public class ArduinoPin {
      * @param name a new name for this pin.
      */
     public void setName(String name) {
-        this.name = name;
+        this.name = Objects.requireNonNull(name, "Null name!");
     }
 
     @Override
     public String toString() {
-        return "Pin " + pin + " is \"" + name + "\", value: " +
-                (value == 255 ? "high" : (value == 0 ? "low" : ((int) Math.round(value / 2.55) + "%")));
+        return "Pin " + pin + " is \"" + name + "\", value: " + value.toString();
     }
 }

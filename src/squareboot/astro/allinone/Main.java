@@ -47,7 +47,7 @@ public class Main {
     /**
      * Do not show the control panel.
      */
-    private static boolean noGui = false;
+    private static boolean showGui = false;
     /**
      * Splash screen.
      */
@@ -62,28 +62,6 @@ public class Main {
             System.err.println("Unable to load app image.");
             e.printStackTrace();
         }
-    }
-
-    /**
-     * @return the stored Arduino pin driver.
-     * @see INDIArduinoDriver
-     */
-    public static INDIArduinoDriver getArduinoDriver() {
-        return arduinoDriver;
-    }
-
-    /**
-     * @return the current settings.
-     */
-    public static Settings getSettings() {
-        return settings;
-    }
-
-    /**
-     * @return the current running server.
-     */
-    public static INDIServer getServer() {
-        return server;
     }
 
     /**
@@ -143,14 +121,14 @@ public class Main {
                 settings.setUsbPort(line.getOptionValue('s'));
             }
 
-            noGui = line.hasOption('n');
+            showGui = !line.hasOption('n');
 
         } catch (ParseException e) {
             System.err.println("The given arguments are not valid!");
             exit(ExitCodes.PARSE_ERROR);
         }
 
-        if (noGui) {
+        if (!showGui) {
             start();
 
         } else {
@@ -172,7 +150,7 @@ public class Main {
     }
 
     private static void start() {
-        if (!noGui) {
+        if (showGui) {
             splash.setVisible(true);
         }
         System.out.println("Starting server...");
@@ -186,6 +164,7 @@ public class Main {
         if (!server.isServerRunning()) {
             System.err.println("Could not start server!");
             exit(ExitCodes.SERVER_ERROR);
+            return;
         }
 
         System.out.println("Loading Arduino driver...");
@@ -196,7 +175,7 @@ public class Main {
 
         } catch (ConnectionError e) {
             System.err.println("Unable to connect to the given serial port!");
-            if (!noGui) {
+            if (showGui) {
                 JOptionPane.showMessageDialog(null, "Unable to connect to the given serial port!",
                         APP_NAME, JOptionPane.ERROR_MESSAGE);
             }
@@ -206,14 +185,24 @@ public class Main {
         arduinoDriver = INDIArduinoDriver.getInstance();
         if (arduinoDriver == null) {
             System.err.println("Due to unknown reasons, the Arduino driver could not be loaded!");
-            if (!noGui) {
+            if (showGui) {
                 JOptionPane.showMessageDialog(null, "Due to unknown reasons, the Arduino driver could not be loaded!",
                         APP_NAME, JOptionPane.ERROR_MESSAGE);
             }
             exit(ExitCodes.ARDUINO_ERROR);
             return;
         }
-        arduinoDriver.init(realArduino, settings.getDigitalPins().toArray(), settings.getPwmPins().toArray());
+        try {
+            arduinoDriver.init(realArduino, settings.getDigitalPins().toArray(), settings.getPwmPins().toArray());
+
+        } catch (IllegalStateException e) {
+            System.err.println(e.getMessage());
+            if (showGui) {
+                JOptionPane.showMessageDialog(splash, e.getMessage(), APP_NAME, JOptionPane.ERROR_MESSAGE);
+            }
+            Main.exit(ExitCodes.ARDUINO_ERROR);
+            return;
+        }
 
         try {
             System.out.println("Loading port forwarder (socat)...");
@@ -221,7 +210,7 @@ public class Main {
 
         } catch (IllegalStateException e) {
             System.err.println("socat error!");
-            if (!noGui) {
+            if (showGui) {
                 JOptionPane.showMessageDialog(null, "socat error!",
                         APP_NAME, JOptionPane.ERROR_MESSAGE);
             }
@@ -235,6 +224,36 @@ public class Main {
             splash = null;
             new ServerMiniWindow(multiplexer.getMockedPort(), arduinoDriver);
         });
+    }
+
+    /**
+     * @return the multiplexer.
+     * @see SerialPortMultiplexer
+     */
+    public static SerialPortMultiplexer getMultiplexer() {
+        return multiplexer;
+    }
+
+    /**
+     * @return the stored Arduino pin driver.
+     * @see INDIArduinoDriver
+     */
+    public static INDIArduinoDriver getArduinoDriver() {
+        return arduinoDriver;
+    }
+
+    /**
+     * @return the current settings.
+     */
+    public static Settings getSettings() {
+        return settings;
+    }
+
+    /**
+     * @return the current running server.
+     */
+    public static INDIServer getServer() {
+        return server;
     }
 
     /**
@@ -280,8 +299,7 @@ public class Main {
         PARSE_ERROR(6),
         SERVER_ERROR(7),
         ARDUINO_ERROR(8),
-        SOCAT_ERROR(9),
-        SYS_TRAY(10);
+        SOCAT_ERROR(9);
 
         /**
          * The exit code.
