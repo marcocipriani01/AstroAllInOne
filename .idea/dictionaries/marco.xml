@@ -2,11 +2,20 @@
   <dictionary name="marco">
     <words>
       <w>allinone</w>
+      <w>autodesk</w>
+      <w>crayford</w>
+      <w>ekos</w>
       <w>focuser</w>
+      <w>focusers</w>
       <w>gson</w>
       <w>moonlite</w>
+      <w>mosfet</w>
+      <w>mosfets</w>
+      <w>nano</w>
       <w>plaf</w>
       <w>socat</w>
+      <w>vxxyyy</w>
+      <w>wikipedia</w>
     </words>
   </dictionary>
 </component>

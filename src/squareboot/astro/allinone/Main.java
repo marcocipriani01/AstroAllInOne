@@ -77,12 +77,12 @@ public class Main {
                 "The directory where AstroAllInOne will retrieve its settings.");
         options.addOption("g", "no-gtk", false,
                 "Forces the app to use the Java default L&F.");
-        options.addOption("p", "port", true,
-                "Specifies a port for the INDI server (default 7624).");
+        options.addOption("p", "indi-port", true,
+                "Specifies a port for the INDI server (default 7625).");
         options.addOption("a", "serial-port", true,
                 "Specifies a serial port.");
         options.addOption("n", "no-gui", false,
-                "Do not show the control panel and print error on the command line, no info messages.");
+                "Do not show the control panel, no GUI.");
 
         try {
             CommandLine line = parser.parse(options, args);
