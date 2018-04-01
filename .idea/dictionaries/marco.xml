@@ -2,6 +2,7 @@
   <dictionary name="marco">
     <words>
       <w>allinone</w>
+      <w>astroallinone</w>
       <w>autodesk</w>
       <w>crayford</w>
       <w>ekos</w>
@@ -12,10 +13,12 @@
       <w>mosfet</w>
       <w>mosfets</w>
       <w>nano</w>
+      <w>ostermiller</w>
       <w>plaf</w>
       <w>socat</w>
       <w>vxxyyy</w>
       <w>wikipedia</w>
+      <w>zerjillo</w>
     </words>
   </dictionary>
 </component>

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=AstroAllInOne
+Comment=AstroAllInOne by SquareBoot
+Exec=/usr/bin/astroallinone
+Icon=/usr/share/AstroAllInOne/logo.png
+Terminal=false
+Type=Application
+Categories=Application;Science;Astronomy;
+StartupNotify=true

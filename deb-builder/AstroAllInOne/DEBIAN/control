@@ -1,0 +1,10 @@
+Package: AstroAllInOne
+Architecture: all
+Maintainer: SquareBoot
+Depends: socat
+Priority: optional
+Version: 1.0
+Description: INDI driver to control a focuser and a list of pins
+ AstroAllInOne is an INDI driver that forwards commands from an
+ Arduino to two INDI devices to control with just one Arduino a
+ MoonLite focuser and a customizable list of digital and PWM pins.
