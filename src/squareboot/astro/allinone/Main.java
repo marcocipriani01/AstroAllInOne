@@ -17,7 +17,7 @@ import java.io.File;
  * @author SquareBoot
  * @version 0.1
  */
-@SuppressWarnings({"unused", "WeakerAccess"})
+@SuppressWarnings("WeakerAccess")
 public class Main {
 
     /**
@@ -53,25 +53,11 @@ public class Main {
      */
     private static SplashScreen splash;
 
-    static {
-        try {
-            logo = Toolkit.getDefaultToolkit().getImage(Main.class.
-                    getResource("/squareboot/astro/allinone/res/logo.png"));
-
-        } catch (Exception e) {
-            System.err.println("Unable to load app image.");
-            e.printStackTrace();
-        }
-    }
-
     /**
      * Main. Configures the L&F and starts the application.
      */
     public static void main(String[] args) {
-        splash = new SplashScreen(0);
-
         CommandLineParser parser = new DefaultParser();
-
         Options options = new Options();
         options.addOption("d", "data-dir", true,
                 "The directory where AstroAllInOne will retrieve its settings.");
@@ -87,14 +73,25 @@ public class Main {
         try {
             CommandLine line = parser.parse(options, args);
 
-            if (!line.hasOption('g')) {
+            showGui = !line.hasOption('n');
+            if (showGui) {
+                splash = new SplashScreen(500);
                 try {
-                    System.out.println("Loading GTK...");
-                    UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+                    logo = Toolkit.getDefaultToolkit().getImage(Main.class.
+                            getResource("/squareboot/astro/allinone/res/logo.png"));
 
                 } catch (Exception e) {
-                    System.err.println("Unable to set up GTK: " + e.getMessage());
-                    e.printStackTrace();
+                    System.err.println("Unable to load app image.");
+                }
+                if (!line.hasOption('g')) {
+                    try {
+                        System.out.println("Loading GTK...");
+                        UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+
+                    } catch (Exception e) {
+                        System.err.println("Unable to set up GTK: " + e.getMessage());
+                        e.printStackTrace();
+                    }
                 }
             }
 
@@ -120,8 +117,6 @@ public class Main {
             if (line.hasOption('a')) {
                 settings.setUsbPort(line.getOptionValue('s'));
             }
-
-            showGui = !line.hasOption('n');
 
         } catch (ParseException e) {
             System.err.println("The given arguments are not valid!");
@@ -171,7 +166,9 @@ public class Main {
         server.loadJava(INDIArduinoDriver.class);
         SimpleSerialPort realArduino;
         try {
-            realArduino = new SimpleSerialPort(settings.getUsbPort());
+            String usbPort = settings.getUsbPort();
+            System.out.println("Connecting to serial port \"" + usbPort + "\"...");
+            realArduino = new SimpleSerialPort(usbPort);
 
         } catch (ConnectionError e) {
             System.err.println("Unable to connect to the given serial port!");
@@ -218,12 +215,18 @@ public class Main {
             return;
         }
 
-        System.out.println("Starting status window...");
-        SwingUtilities.invokeLater(() -> {
-            splash.dispose();
-            splash = null;
-            new ServerMiniWindow(multiplexer.getMockedPort(), arduinoDriver);
-        });
+        System.out.println("Connect MoonLite to port " + multiplexer.getMockedPort());
+        if (showGui) {
+            System.out.println("Starting status window...");
+            SwingUtilities.invokeLater(() -> {
+                splash.dispose();
+                splash = null;
+                new ServerMiniWindow(multiplexer.getMockedPort(), arduinoDriver);
+            });
+
+        } else {
+            System.out.println("Control-C to close");
+        }
     }
 
     /**

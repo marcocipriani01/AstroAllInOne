@@ -258,8 +258,12 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         int value = 13;
         do {
             try {
-                value = Integer.valueOf(JOptionPane.showInputDialog(this, "New pin",
-                        "Control panel", JOptionPane.QUESTION_MESSAGE));
+                String input = JOptionPane.showInputDialog(this, "New pin",
+                        "Control panel", JOptionPane.QUESTION_MESSAGE);
+                if (input == null) {
+                    return null;
+                }
+                value = Integer.valueOf(input);
                 check = false;
 
             } catch (NumberFormatException e) {

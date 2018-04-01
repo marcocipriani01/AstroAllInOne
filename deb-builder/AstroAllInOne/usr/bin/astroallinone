@@ -1,15 +1,8 @@
 #!/bin/bash
-close() {
-    echo "Bye!"
-    exit 0
-}
-trap close INT
-
 if [ -z "$(which java)" ]; then
     echo "Java not found!"
     exit 3
 fi
-
 dataDir="$HOME/.config/AstroAllInOne"
 mkdir -p "$dataDir"
 java -jar "/usr/share/AstroAllInOne/AstroAllInOne.jar" "--data-dir=$dataDir" "$@"

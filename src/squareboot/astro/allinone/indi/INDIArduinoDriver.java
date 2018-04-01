@@ -88,18 +88,33 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
         digitalPinProps = new INDISwitchProperty(this, "Digital pins", "Digital pins", "Control",
                 PropertyStates.OK, PropertyPermissions.RW, Constants.SwitchRules.ANY_OF_MANY);
         for (ArduinoPin pin : switchPins) {
-            printMessage("onDigitalPinCreate(" + pin + ")");
-            pinsMap.put(new INDISwitchElement(digitalPinProps, "Pin " + pin.getPin(),
-                    pin.getName(), pin.getValueIndi()), pin);
+            int p = checkPin(pin);
+            if (p != -1) {
+                pinsMap.put(new INDISwitchElement(digitalPinProps, "Pin " + p,
+                        pin.getName(), pin.getValueIndi()), pin);
+            }
         }
 
         pwmPinsProp = new INDINumberProperty(this, "PWM pins", "PWM pins", "Control",
                 PropertyStates.OK, PropertyPermissions.RW);
         for (ArduinoPin pin : pwmPins) {
-            printMessage("onPwmPinCreate(" + pin + ")");
-            pinsMap.put(new INDINumberElement(pwmPinsProp, "PWM pin" + pin.getPin(), pin.getName(),
-                    (double) pin.getValuePercentage(), 0.0, 100.0, 1.0, "%f"), pin);
+            int p = checkPin(pin);
+            if (p != -1) {
+                pinsMap.put(new INDINumberElement(pwmPinsProp, "PWM pin" + p, pin.getName(),
+                        (double) pin.getValuePercentage(), 0.0, 100.0, 1.0, "%f"), pin);
+            }
         }
+    }
+
+    private int checkPin(ArduinoPin pin) {
+        printMessage("Defining pin: " + pin);
+        int p = pin.getPin();
+        if ((p < 2) || (p > 99)) {
+            System.err.println("Ignoring pin, \"" + p + "\" is out the allowed bounds!");
+            return -1;
+        }
+        updatePin(pin);
+        return p;
     }
 
     /**
