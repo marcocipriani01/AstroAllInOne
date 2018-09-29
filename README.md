@@ -92,5 +92,5 @@ Be the first to fork AstroAllInOne!
 - <a href="https://github.com/google/gson">Gson</a> by Google, <a href="https://github.com/google/gson/blob/master/LICENSE">license</a>
 - <a href="https://commons.apache.org/proper/commons-cli/">Commons CLI</a> by Apache Commons, <a href="http://www.apache.org/licenses/">license</a>
 - <a href="http://indiforjava.sourceforge.net/stage/">INDI for Java</a> by Zerjillo
-    - <a href="https://ostermiller.org/utils/">Ostermiller Java Utilities</a> by Stephen Ostermiller,<a href="https://ostermiller.org/utils/license.html">license</a>
+    - <a href="https://ostermiller.org/utils/">Ostermiller Java Utilities</a> by Stephen Ostermiller, <a href="https://ostermiller.org/utils/license.html">license</a>
 - <a href="https://github.com/scream3r/java-simple-serial-connector">jSSC</a> by scream3r, <a href="http://www.gnu.org/licenses/lgpl.html">license</a>

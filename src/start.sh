@@ -1,11 +1,4 @@
 #!/bin/bash
-close() {
-    echo "Bye!"
-    exit 0
-}
-trap close INT
-
-echo "Welcome!"
 echo "Checking required packages..."
 if [ -z "$(which java)" ]; then
     echo "Java not found!"
@@ -16,30 +9,24 @@ if [ -z "$(which socat)" ]; then
     read -p "Do you want to install it (y/n)? " ri
     if [ "$ri" == "y" ]; then
         echo "Installing..."
-        sudo apt-get install socat
+        sudo apt-get install -y socat
         echo "Done."
 
     else
-        exit 3
+        exit 4
     fi
 fi
 if [ -z "$(which indiserver)" ]; then
     echo "INDI not found!"
-    exit 3
+    exit 5
 fi
 
-echo "Loading AstroAllInOne..."
-installDir="$(dirname "$0")/AstroAllInOne.jar"
-if [ -n "$1" ]; then
-    installDir="$1"
-    echo "Using AstroAllInOne in $(dirname ${installDir})..."
-fi
+installDir="$(dirname "$0")/../out/artifacts/AstroAllInOne_jar/AstroAllInOne.jar"
 if [ ! -f "$installDir" ]; then
-    echo "AstroAllInOne not found!"
-    exit 4
+    echo "AstroAllInOne.jar not found! Please build the module first!"
+    exit 6
 fi
 
 dataDir="$HOME/.config/AstroAllInOne"
 mkdir -p "$dataDir"
-
 java -jar "$installDir" "--data-dir=$dataDir"
