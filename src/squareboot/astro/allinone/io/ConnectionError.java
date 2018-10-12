@@ -186,6 +186,10 @@ public class ConnectionError extends RuntimeException {
         /**
          * Occurs when the network interfaces are unreachable.
          */
-        NETWORK_ERROR
+        NETWORK_ERROR,
+        /**
+         * Connection timeout.
+         * */
+        TIMEOUT
     }
 }

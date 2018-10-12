@@ -1,19 +1,19 @@
 package squareboot.astro.allinone.io;
 
-import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortException;
 
 import java.util.ArrayList;
 
 /**
- * Implementation of {@link GenericSerialPort} that handles messages which end with a new line char.
+ * Implementation of {@link SerialPortImpl} that handles messages which end with a new line char ({@code \n or \r}).
+ * Also has a function to wait for a specific message.
  *
  * @author SquareBoot
  * @version 0.1
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class Arduino extends GenericSerialPort {
+public class Arduino extends SerialPortImpl {
 
     /**
      * {@code true} to lock the listeners. Used by {@link #waitFor(Arduino.ConditionChecker, long)}.
@@ -54,11 +54,6 @@ public class Arduino extends GenericSerialPort {
         super(port, rate);
     }
 
-    @Override
-    protected int getMask() {
-        return SerialPort.MASK_RXCHAR;
-    }
-
     /**
      * Serial event. Receives data from the connected board.
      *
@@ -67,8 +62,7 @@ public class Arduino extends GenericSerialPort {
     @Override
     public void serialEvent(SerialPortEvent portEvent) {
         try {
-            tmpMsg = tmpMsg + serialPort.readString();
-
+            tmpMsg += serialPort.readString();
             if (tmpMsg.contains("\n") || tmpMsg.contains("\r")) {
                 String[] split = tmpMsg.split("[\\n\\r]");
                 ArrayList<String> messages = new ArrayList<>();
@@ -78,8 +72,8 @@ public class Arduino extends GenericSerialPort {
                         messages.add(s);
                     }
                 }
-
                 int size = messages.size();
+                //TODO review this!
                 if (size > 0) {
                     int i = 0;
                     while (i < (size - 1)) {
@@ -104,20 +98,22 @@ public class Arduino extends GenericSerialPort {
     }
 
     /**
-     * Sends a message to all the stored serial message listeners.
+     * Sends a message to all the registered serial message listeners.
      *
      * @param msg the message.
      */
     @Override
-    protected void notifyListener0(String msg) {
-        msg = msg.replace("\n", "").replace("\r", "");
-        if (!msg.equals("")) {
-            if (listenersDetach) {
-                checker.check0(msg);
+    protected void notifyListener(String msg) {
+        if (msg != null) {
+            msg = msg.replace("\n", "").replace("\r", "");
+            if (!msg.equals("")) {
+                if (listenersDetach) {
+                    checker.check0(msg);
 
-            } else {
-                for (SerialMessageListener l : listeners) {
-                    l.onMessage(msg);
+                } else {
+                    for (SerialMessageListener l : listeners) {
+                        l.onPortMessage(msg);
+                    }
                 }
             }
         }

@@ -4,6 +4,7 @@ import laazotea.indi.INDIException;
 import laazotea.indi.driver.INDIDriver;
 import laazotea.indi.server.DefaultINDIServer;
 import laazotea.indi.server.INDIClient;
+import squareboot.astro.allinone.Main;
 import squareboot.astro.allinone.io.ConnectionError;
 
 import java.net.Socket;
@@ -170,9 +171,9 @@ public class INDIServer extends DefaultINDIServer {
     }
 
     /**
-     * Gets if the server is listening for new Clients to connect.
+     * Gets if the server is listening for new clients to connect.
      *
-     * @return <code>true</code> if the server is listening for new Clients. <code>false</code> otherwise.
+     * @return {@code true} if the server is listening for new clients.
      */
     @Override
     public boolean isServerRunning() {
@@ -180,8 +181,8 @@ public class INDIServer extends DefaultINDIServer {
     }
 
     /**
-     * Stops the server from listening new clients. All connections with existing
-     * clients are also broken.
+     * Stops the server from listening new clients.
+     * All connections with existing clients are also broken.
      */
     @Override
     public void stopServer() {
@@ -227,17 +228,7 @@ public class INDIServer extends DefaultINDIServer {
      */
     @Override
     protected void connectionWithClientBroken(INDIClient client) {
-        printMessage("Connection with client " + client.getInetAddress() + " has been broken.");
-    }
-
-    /**
-     * Write message to the INDI console (System.err)
-     *
-     * @param message The message to be printed.
-     */
-    public void printMessage(String message) {
-        System.err.println(message);
-        System.err.flush();
+        Main.err("Connection with client " + client.getInetAddress() + " has been broken.");
     }
 
     /**
@@ -247,7 +238,7 @@ public class INDIServer extends DefaultINDIServer {
      */
     @Override
     protected void connectionWithClientEstablished(INDIClient client) {
-        printMessage("Connection with client " + client.getInetAddress() + " established.");
+        Main.err("Connection with client " + client.getInetAddress() + " established.");
     }
 
     /**
@@ -258,7 +249,7 @@ public class INDIServer extends DefaultINDIServer {
      */
     @Override
     protected void driverDisconnected(String driverIdentifier, String[] deviceNames) {
-        printMessage("Driver " + driverIdentifier + " has been disconnected. " +
+        Main.err("Driver " + driverIdentifier + " has been disconnected. " +
                 "The following devices have disappeared: " + Arrays.toString(deviceNames)
                 .replace("[", "").replace("]", ""));
     }

@@ -3,21 +3,18 @@ package squareboot.astro.allinone;
 import org.apache.commons.cli.*;
 import squareboot.astro.allinone.indi.INDIArduinoDriver;
 import squareboot.astro.allinone.indi.INDIServer;
-import squareboot.astro.allinone.io.ConnectionError;
-import squareboot.astro.allinone.io.SerialPortMultiplexer;
-import squareboot.astro.allinone.io.SimpleSerialPort;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
+import java.io.PrintWriter;
 
 /**
  * The main class of the application.
  *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.1
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "unused"})
 public class Main {
 
     /**
@@ -25,9 +22,9 @@ public class Main {
      */
     public static final String APP_NAME = "AstroAllInOne";
     /**
-     * The icon (for Swing).
+     * Verbose/debug mode.
      */
-    public static Image logo;
+    private static boolean verboseMode = false;
     /**
      * Global settings
      */
@@ -37,21 +34,9 @@ public class Main {
      */
     private static INDIServer server;
     /**
-     * Serial port multiplexer.
-     */
-    private static SerialPortMultiplexer multiplexer;
-    /**
-     * The Arduino pin driver.
-     */
-    private static INDIArduinoDriver arduinoDriver;
-    /**
      * Do not show the control panel.
      */
-    private static boolean showGui = false;
-    /**
-     * Splash screen.
-     */
-    private static SplashScreen splash;
+    private static boolean showGUI = false;
 
     /**
      * Main. Configures the L&F and starts the application.
@@ -59,190 +44,106 @@ public class Main {
     public static void main(String[] args) {
         CommandLineParser parser = new DefaultParser();
         Options options = new Options();
-        options.addOption("d", "data-dir", true,
-                "The directory where AstroAllInOne will retrieve its settings.");
-        options.addOption("g", "no-gtk", false,
-                "Forces the app to use the Java default L&F.");
-        options.addOption("n", "no-gui", false,
-                "Do not show the control panel, no GUI.");
+        Option settingsOption = new Option("s", "settings", true,
+                "The directory where AstroAllInOne will save and retrieve its settings.");
+        settingsOption.setRequired(true);
+        options.addOption(settingsOption);
+        options.addOption("c", "control-panel", false,
+                "Shows the control panel.");
+        options.addOption("d", "driver", false,
+                "Driver-only mode (no server, stdin/stdout)");
         options.addOption("p", "indi-port", true,
-                "Specifies a port for the INDI server (default 7625).");
+                "Specifies a port for the INDI server (default 7625) and switches to stand-alone mode, with server.");
         options.addOption("a", "serial-port", true,
-                "Specifies a serial port.");
+                "Specifies a serial port and connects to it if possible. Otherwise it will be stored to settings only.");
+        options.addOption("v", "verbose", false, "Verbose mode.");
+
+        boolean autoConnectSerial = false;
 
         try {
             CommandLine line = parser.parse(options, args);
 
-            showGui = !line.hasOption('n');
-            if (showGui) {
-                splash = new SplashScreen(500);
-                try {
-                    logo = Toolkit.getDefaultToolkit().getImage(Main.class.
-                            getResource("/squareboot/astro/allinone/res/logo.png"));
+            verboseMode = line.hasOption('v');
 
-                } catch (Exception e) {
-                    System.err.println("Unable to load app image.");
+            if (line.hasOption('s')) {
+                if (verboseMode) {
+                    System.err.println("Loading data...");
                 }
-                if (!line.hasOption('g')) {
-                    try {
-                        System.out.println("Loading GTK...");
-                        UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
-
-                    } catch (Exception e) {
-                        System.err.println("Unable to set up GTK: " + e.getMessage());
-                        e.printStackTrace();
-                    }
-                }
-            }
-
-            if (line.hasOption('d')) {
-                System.out.println("Loading data...");
-                settings = Settings.load(new File(line.getOptionValue('d')));
+                settings = Settings.load(new File(line.getOptionValue('s')));
 
             } else {
-                System.err.println("Please specify option --data-dir " + options.getOption("d").getDescription());
                 exit(ExitCodes.NO_DATA_DIR);
             }
 
-            if (line.hasOption('p')) {
+            boolean controlPanel = showGUI = line.hasOption('c'),
+                    serverMode = line.hasOption('p'),
+                    driverOnly = line.hasOption('d');
+
+            if (line.hasOption('a')) {
+                settings.setUsbPort(line.getOptionValue('a'));
+                autoConnectSerial = true;
+            }
+
+            if (serverMode) {
                 try {
                     settings.setIndiPort(Integer.valueOf(line.getOptionValue('p')));
 
                 } catch (NumberFormatException e) {
-                    System.err.println("Unable to parse the INDI server port!");
-                    exit(ExitCodes.PARSE_ERROR);
+                    exit(ExitCodes.PARSING_ERROR);
                 }
             }
 
-            if (line.hasOption('a')) {
-                settings.setUsbPort(line.getOptionValue('s'));
+            if (controlPanel && !driverOnly) {
+                showGUI = true;
+                if (System.getProperty("os.name").toLowerCase().equals("linux")) {
+                    try {
+                        err("Setting up GTK...");
+                        UIManager.setLookAndFeel("com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
+
+                    } catch (Exception e) {
+                        err("Unable to set-up the GTK l&f", e, false);
+                    }
+                }
+                SwingUtilities.invokeLater(() -> new ControlPanel() {
+                    @Override
+                    protected void onRunServer() {
+
+                    }
+                });
+
+            } else if (serverMode && (!controlPanel && !driverOnly)) {
+                server = new INDIServer(settings.getIndiPort());
+                server.loadJava(INDIArduinoDriver.class);
+
+            } else if (driverOnly && (!controlPanel && !serverMode)) {
+                new INDIArduinoDriver(System.in, System.out, autoConnectSerial);
+
+            } else {
+                exit(ExitCodes.INVALID_OPTIONS);
             }
 
         } catch (ParseException e) {
-            System.err.println("The given arguments are not valid!");
-            exit(ExitCodes.PARSE_ERROR);
-        }
-
-        if (!showGui) {
-            start();
-
-        } else {
-            SwingUtilities.invokeLater(() -> {
-                splash.setVisible(false);
-                new ControlPanel() {
-                    @Override
-                    protected void onOk() {
-                        start();
-                    }
-
-                    @Override
-                    protected void onCancel() {
-                        exit();
-                    }
-                };
-            });
-        }
-    }
-
-    private static void start() {
-        if (showGui) {
-            splash.setVisible(true);
-        }
-        System.out.println("Starting server...");
-        server = new INDIServer(settings.getIndiPort());
-        try {
-            Thread.sleep(200);
-
-        } catch (InterruptedException ignored) {
-
-        }
-        if (!server.isServerRunning()) {
-            System.err.println("Could not start server!");
-            exit(ExitCodes.SERVER_ERROR);
-            return;
-        }
-
-        System.out.println("Loading Arduino driver...");
-        server.loadJava(INDIArduinoDriver.class);
-        SimpleSerialPort realArduino;
-        try {
-            String usbPort = settings.getUsbPort();
-            System.out.println("Connecting to serial port \"" + usbPort + "\"...");
-            realArduino = new SimpleSerialPort(usbPort);
-
-        } catch (ConnectionError e) {
-            System.err.println("Unable to connect to the given serial port!");
-            if (showGui) {
-                JOptionPane.showMessageDialog(null, "Unable to connect to the given serial port!",
-                        APP_NAME, JOptionPane.ERROR_MESSAGE);
-            }
-            exit(ExitCodes.ARDUINO_ERROR);
-            return;
-        }
-        arduinoDriver = INDIArduinoDriver.getInstance();
-        if (arduinoDriver == null) {
-            System.err.println("Due to unknown reasons, the Arduino driver could not be loaded!");
-            if (showGui) {
-                JOptionPane.showMessageDialog(null, "Due to unknown reasons, the Arduino driver could not be loaded!",
-                        APP_NAME, JOptionPane.ERROR_MESSAGE);
-            }
-            exit(ExitCodes.ARDUINO_ERROR);
-            return;
-        }
-        try {
-            arduinoDriver.init(realArduino, settings.getDigitalPins().toArray(), settings.getPwmPins().toArray());
-
-        } catch (IllegalStateException e) {
-            System.err.println(e.getMessage());
-            if (showGui) {
-                JOptionPane.showMessageDialog(splash, e.getMessage(), APP_NAME, JOptionPane.ERROR_MESSAGE);
-            }
-            Main.exit(ExitCodes.ARDUINO_ERROR);
-            return;
-        }
-
-        try {
-            System.out.println("Loading port forwarder (socat)...");
-            multiplexer = new SerialPortMultiplexer(realArduino);
-
-        } catch (IllegalStateException e) {
-            System.err.println("socat error!");
-            if (showGui) {
-                JOptionPane.showMessageDialog(null, "socat error!",
-                        APP_NAME, JOptionPane.ERROR_MESSAGE);
-            }
-            Main.exit(Main.ExitCodes.SOCAT_ERROR);
-            return;
-        }
-
-        System.out.println("Connect MoonLite to port " + multiplexer.getMockedPort());
-        if (showGui) {
-            System.out.println("Starting status window...");
-            SwingUtilities.invokeLater(() -> {
-                splash.dispose();
-                splash = null;
-                new ServerMiniWindow(multiplexer.getMockedPort(), arduinoDriver);
-            });
-
-        } else {
-            System.out.println("Control-C to close");
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp(new PrintWriter(System.err), HelpFormatter.DEFAULT_WIDTH, "astroallinone",
+                    "Help for AstroAllInOne:", options, HelpFormatter.DEFAULT_LEFT_PAD,
+                    HelpFormatter.DEFAULT_DESC_PAD, "-d -c" +
+                            "\n\nDistributed under the Apache License, Version 2.0, by SquareBoot");
+            exit(ExitCodes.PARSING_ERROR);
         }
     }
 
     /**
-     * @return the multiplexer.
-     * @see SerialPortMultiplexer
+     * @return {@code true} if the user enabled the verbose/debug mode.
      */
-    public static SerialPortMultiplexer getMultiplexer() {
-        return multiplexer;
+    public static boolean isVerboseMode() {
+        return verboseMode;
     }
 
     /**
-     * @return the stored Arduino pin driver.
-     * @see INDIArduinoDriver
+     * @return {@code true} if the GUI is enabled.
      */
-    public static INDIArduinoDriver getArduinoDriver() {
-        return arduinoDriver;
+    public static boolean isGUIEnabled() {
+        return showGUI;
     }
 
     /**
@@ -259,20 +160,15 @@ public class Main {
         return server;
     }
 
+    // ----------- Exit management -----------
+
     /**
      * Closes the app.
      *
      * @param code an exit code.
      */
     public static void exit(int code) {
-        System.out.println("Bye!");
-        if (server != null && server.isServerRunning()) {
-            server.stopServer();
-        }
-        if (multiplexer != null) {
-            multiplexer.stop();
-        }
-        System.exit(code);
+        exit(ExitCodes.fromCode(code));
     }
 
     /**
@@ -281,7 +177,14 @@ public class Main {
      * @param code an exit code.
      */
     public static void exit(ExitCodes code) {
-        exit(code.getCode());
+        if (server != null && server.isServerRunning()) {
+            server.stopServer();
+        }
+        String message = code.getMessage();
+        if (message != null) {
+            err(message, true);
+        }
+        System.exit(code.getCode());
     }
 
     /**
@@ -292,28 +195,130 @@ public class Main {
     }
 
     /**
+     * Reports an error to the user.
+     *
+     * @param msg        a message that will be printed to {@link System#err} if verbose mode is on
+     * @param e          the exception you want to print the stacktrace of.
+     * @param showDialog set to true to show a visual dialog with the same message.
+     */
+    public static void err(String msg, Exception e, boolean showDialog) {
+        if (verboseMode) {
+            System.err.println(msg);
+            e.printStackTrace();
+        }
+        if (showGUI && showDialog) {
+            JOptionPane.showMessageDialog(null, msg, APP_NAME, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Reports an error to the user.
+     *
+     * @param msg        a message that will be printed to {@link System#err} if verbose mode is on
+     * @param showDialog set to true to show a visual dialog with the same message.
+     */
+    public static void err(String msg, boolean showDialog) {
+        if (verboseMode) {
+            System.err.println(msg);
+        }
+        if (showGUI && showDialog) {
+            JOptionPane.showMessageDialog(null, msg, APP_NAME, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Reports an error to the user.
+     *
+     * @param msg a message that will be printed to {@link System#err} if verbose mode is on
+     */
+    public static void err(String msg) {
+        err(msg, false);
+    }
+
+    /**
+     * Reports an info to the user.
+     *
+     * @param msg        a message that will be printed to {@link System#err} ({@link System#out} may have been used for the INDI driver).
+     * @param showDialog set to true to show a visual dialog with the same message.
+     */
+    public static void info(String msg, boolean showDialog) {
+        System.err.println(msg);
+        if (showGUI && showDialog) {
+            JOptionPane.showMessageDialog(null, msg, APP_NAME, JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    /**
+     * Reports an info to the user.
+     *
+     * @param msg a message that will be printed to {@link System#err} ({@link System#out} may have been used for the INDI driver).
+     */
+    public static void info(String msg) {
+        System.err.println(msg);
+    }
+
+    /**
      * A list of common exit codes.
      *
      * @author SquareBoot
      * @version 0.1
      */
     public enum ExitCodes {
-        NO_DATA_DIR(5),
-        PARSE_ERROR(6),
-        SERVER_ERROR(7),
-        ARDUINO_ERROR(8),
-        SOCAT_ERROR(9);
+        NO_DATA_DIR(5, "Please add option --settings=/path/to/settings!"),
+        PARSING_ERROR(6, "Unable to parse the INDI server port!"),
+        INVALID_OPTIONS(7),
+        SERVER_ERROR(8, "Could not start server!"),
+        ARDUINO_ERROR(9, "Unable to connect to the serial port!"),
+        SOCAT_ERROR(10, "socat error!"),
+        INTERNAL_ERROR(11, "Internal unexpected error!");
 
         /**
          * The exit code.
          */
         private int code;
+        /**
+         * A message.
+         */
+        private String message;
 
         /**
          * Enum constructor.
+         *
+         * @param code integer, exit code.
          */
         ExitCodes(int code) {
+            this(code, null);
+        }
+
+        /**
+         * Enum constructor.
+         *
+         * @param code    integer, exit code.
+         * @param message a message.
+         */
+        ExitCodes(int code, String message) {
             this.code = code;
+            this.message = message;
+        }
+
+        /**
+         * @return the right {@link ExitCodes} object associated to the given exit code.
+         * {@code null} if nothing matches the given code.
+         */
+        public static ExitCodes fromCode(int code) {
+            for (ExitCodes c : values()) {
+                if (c.code == code) {
+                    return c;
+                }
+            }
+            return null;
+        }
+
+        /**
+         * @return a message to be printed in case of error. Can be null.
+         */
+        public String getMessage() {
+            return message;
         }
 
         /**

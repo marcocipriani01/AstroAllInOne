@@ -10,7 +10,7 @@ import java.awt.event.WindowEvent;
 
 /**
  * @author SquareBoot
- * @version 0.1
+ * @version 1.0
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class ServerMiniWindow extends JFrame {
@@ -37,7 +37,7 @@ public class ServerMiniWindow extends JFrame {
      */
     public ServerMiniWindow(String focuserPortString, INDIArduinoDriver arduinoDriver) {
         super(Main.APP_NAME);
-        setIconImage(Main.logo);
+        setIconImage(ControlPanel.APP_LOGO);
         setContentPane(parent);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
@@ -58,7 +58,6 @@ public class ServerMiniWindow extends JFrame {
                 arduinoDriver.forceReboot();
             }
         });
-
         pack();
         setLocation(250, 250);
         setVisible(true);

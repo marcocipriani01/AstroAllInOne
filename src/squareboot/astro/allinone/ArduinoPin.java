@@ -7,6 +7,8 @@ import laazotea.indi.Constants;
 import java.util.Objects;
 
 /**
+ * TODO: document
+ *
  * @author SquareBoot
  * @version 0.1
  */

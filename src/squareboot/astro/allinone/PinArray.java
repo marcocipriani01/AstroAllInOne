@@ -5,6 +5,7 @@ import com.google.gson.annotations.SerializedName;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
 
 /**
  * @author SquareBoot
@@ -66,14 +67,14 @@ public class PinArray {
         return Arrays.copyOf(array, array.length, ArduinoPin[].class);
     }
 
-    public boolean add(ArduinoPin pin) {
+    public void add(ArduinoPin pin) {
         if (pin == null) {
             throw new NullPointerException("Null pin!");
         }
         if (contains(pin)) {
             throw new IllegalStateException("Pin already in list!");
         }
-        return list.add(pin);
+        list.add(pin);
     }
 
     public void remove(ArduinoPin pin) {
@@ -85,5 +86,26 @@ public class PinArray {
 
     public void clear() {
         list.clear();
+    }
+
+    /**
+     * @param pins lists of pins
+     * @return {@code true} if no duplicates are found.
+     * @throws IndexOutOfBoundsException if a pin is outside the allowed bounds (2 ≤ pin ≤ 99)
+     * */
+    public static boolean checkPins(ArduinoPin[]... pins) {
+        LinkedHashSet<Integer> checker = new LinkedHashSet<>();
+        int size = 0;
+        for (ArduinoPin[] a : pins) {
+            size += a.length;
+            for (ArduinoPin p : a) {
+                int n = p.getPin();
+                if ((n < 2) || (n > 99)) {
+                    throw new IndexOutOfBoundsException("Invalid pin: " + p + "\" is outside the allowed bounds (2 ≤ pin ≤ 99)!");
+                }
+                checker.add(n);
+            }
+        }
+        return checker.size() == size;
     }
 }

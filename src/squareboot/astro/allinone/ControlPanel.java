@@ -1,11 +1,12 @@
 package squareboot.astro.allinone;
 
-import squareboot.astro.allinone.io.GenericSerialPort;
-
 import javax.swing.*;
-import java.awt.event.*;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.UncheckedIOException;
 
 /**
  * The control panel.
@@ -15,6 +16,12 @@ import java.util.TimerTask;
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public abstract class ControlPanel extends JFrame implements ActionListener {
+
+    /**
+     * Application icon (for swing).
+     */
+    public static Image APP_LOGO = Toolkit.getDefaultToolkit().getImage(ControlPanel.class.
+            getResource("/squareboot/astro/allinone/logo.png"));
 
     /**
      * The parent component.
@@ -28,18 +35,6 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      * The list of PWM pins.
      */
     private JList<ArduinoPin> pwmPinsList;
-    /**
-     * Save button.
-     */
-    private JButton okButton;
-    /**
-     * Cancel button.
-     */
-    private JButton cancelButton;
-    /**
-     * ComboBox containing the list of available serial ports.
-     */
-    private JComboBox<String> portsComboBox;
     /**
      * Field for the INDI server's port.
      */
@@ -69,9 +64,18 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      */
     private JButton editPwmPinButton;
     /**
-     * Timer to refresh the list of available serial ports.
+     * Button to save the pin config.
      */
-    private Timer refresher = new Timer("Serial ports refresher");
+    private JButton saveButton;
+    /**
+     * Button to run the stand-alone INDI server.
+     */
+    private JButton runServerButton;
+    /**
+     * Button to send the pin config to another computer.
+     */
+    private JButton sendConfigButton;
+
     /**
      * Model for the list of digital pins.
      */
@@ -86,57 +90,23 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      */
     public ControlPanel() {
         super(Main.APP_NAME + " control panel");
-        setIconImage(Main.logo);
+        setIconImage(APP_LOGO);
         setContentPane(parent);
-        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
-        addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosing(WindowEvent windowEvent) {
-                onCancel();
-            }
-        });
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
 
-        for (String p : GenericSerialPort.listAvailablePorts()) {
-            portsComboBox.addItem(p);
-        }
-        refresher.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                boolean popupVisible = portsComboBox.isPopupVisible();
-                String selectedItem = (String) portsComboBox.getSelectedItem();
-                portsComboBox.removeAllItems();
-                for (String p : GenericSerialPort.listAvailablePorts()) {
-                    portsComboBox.addItem(p);
-                }
-                if (popupVisible) {
-                    SwingUtilities.invokeLater(() -> portsComboBox.showPopup());
-                }
-                portsComboBox.setSelectedItem(selectedItem);
-            }
-        }, 2500, 2500);
-
-        cancelButton.addActionListener(e -> {
+        saveButton.addActionListener(e -> {
+            savePinConfig();
             dispose();
-            onCancel();
         });
-        okButton.addActionListener(e -> {
-            String serialPort = (String) portsComboBox.getSelectedItem();
-            int indiPort = (int) indiPortField.getValue();
-            if (indiPort < 50 || serialPort == null || serialPort.equals("")) {
-                JOptionPane.showMessageDialog(this, "Invalid input!", Main.APP_NAME,
-                        JOptionPane.ERROR_MESSAGE);
-                return;
-            }
-            System.out.println("Saving user input...");
-            Settings settings = Main.getSettings();
-            settings.setUsbPort(serialPort);
-            settings.setIndiPort(indiPort);
-            settings.save();
+        sendConfigButton.addActionListener(e -> {
+            Settings settings = savePinConfig();
+            //settings.getFile();
+            //TODO send config
+        });
+        runServerButton.addActionListener(e -> {
+            onRunServer();
             dispose();
-            onOk();
         });
-
-        portsComboBox.setSelectedItem(Main.getSettings().getUsbPort());
 
         addDigitalPinButton.addActionListener(this);
         removeDigitalPinButton.addActionListener(this);
@@ -161,16 +131,14 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             }
         });
 
-        setBounds(200, 150, 650, 550);
+        setBounds(200, 150, 600, 500);
         setVisible(true);
     }
 
-    @Override
-    public void dispose() {
-        super.dispose();
-        refresher.cancel();
-    }
 
+    /**
+     * Sets up the user interface.
+     */
     private void createUIComponents() {
         Settings settings = Main.getSettings();
         indiPortField = new JSpinner(new SpinnerNumberModel(settings.getIndiPort(), 10, 99999, 1));
@@ -202,6 +170,42 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         });
     }
 
+    /**
+     * Saves all the configuration to the settings.
+     *
+     * @return the used {@link Settings} object. May be null if the saving failed.
+     */
+    private Settings savePinConfig() {
+        Main.err("Saving user input...");
+        int indiPort = (int) indiPortField.getValue();
+        if (indiPort < 50) {
+            Main.err("Invalid INDI port!", true);
+            return null;
+        }
+        Settings settings = Main.getSettings();
+        settings.setIndiPort(indiPort);
+        try {
+            if (PinArray.checkPins(settings.getDigitalPins().toArray(), settings.getPwmPins().toArray())) {
+                Main.err("Duplicated pins found, please fix this in order to continue.", true);
+                return null;
+            }
+
+        } catch (IndexOutOfBoundsException e) {
+            Main.err(e.getMessage(), e, true);
+            return null;
+        }
+        try {
+            settings.save();
+
+        } catch (UncheckedIOException e) {
+            return null;
+        }
+        return settings;
+    }
+
+    /**
+     * Add/remove/edit digital and PWM pins button actions.
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
@@ -238,24 +242,30 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         }
     }
 
+    /**
+     * Shows a dialog to edit the selected PWM pin.
+     */
     private void editPwmPin() {
         new PwmPinDialog(this, pwmPinsList.getSelectedValue());
         pwmPinsList.repaint();
     }
 
+    /**
+     * Shows a dialog to edit the selected digital pin.
+     */
     private void editDigitalPin() {
         new DigitalPinDialog(this, digitalPinsList.getSelectedValue());
         digitalPinsList.repaint();
     }
 
     /**
-     * Shows a dialog to user asking for a pin.
+     * Shows a dialog to the user asking for a new pin's number.
      *
-     * @return an {@link ArduinoPin} object with the chosen pin.
+     * @return an {@link ArduinoPin} object representing the given pin.
      */
     private ArduinoPin askNewPin() {
-        boolean check;
-        int value = 13;
+        boolean check = true;
+        int value = -1;
         do {
             try {
                 String input = JOptionPane.showInputDialog(this, "New pin",
@@ -267,21 +277,14 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
                 check = false;
 
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Invalid pin! Must be a number.",
-                        Main.APP_NAME, JOptionPane.ERROR_MESSAGE);
-                check = true;
+                Main.err("Invalid pin! Must be a number.", true);
             }
         } while (check);
-        return new ArduinoPin(value, "A pin");
+        return new ArduinoPin(value, "Pin " + value);
     }
 
     /**
-     * Called when the user clicks "OK".
+     * Invoked when the user wants to run the server.
      */
-    protected abstract void onOk();
-
-    /**
-     * Called when the user clicks "Cancel".
-     */
-    protected abstract void onCancel();
+    protected abstract void onRunServer();
 }

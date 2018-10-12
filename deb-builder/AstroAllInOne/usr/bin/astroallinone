@@ -5,4 +5,4 @@ if [ -z "$(which java)" ]; then
 fi
 dataDir="$HOME/.config/AstroAllInOne"
 mkdir -p "$dataDir"
-java -jar "/usr/share/AstroAllInOne/AstroAllInOne.jar" "--data-dir=$dataDir" "$@"
+java -jar "/usr/share/AstroAllInOne/AstroAllInOne.jar" "--settings=$dataDir" "$@"

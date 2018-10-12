@@ -14,7 +14,7 @@
         </constraints>
         <properties>
           <font size="20" style="1"/>
-          <icon value="squareboot/astro/allinone/res/logo.png"/>
+          <icon value="squareboot/astro/allinone/logo.png"/>
           <text value="AstroAllInOne"/>
         </properties>
       </component>

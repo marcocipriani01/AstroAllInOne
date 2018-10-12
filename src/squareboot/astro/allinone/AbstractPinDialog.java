@@ -22,7 +22,7 @@ public abstract class AbstractPinDialog extends JDialog {
      */
     public AbstractPinDialog(JFrame frame, ArduinoPin pin) {
         super(frame, "Pin editor", Dialog.ModalityType.DOCUMENT_MODAL);
-        setIconImage(Main.logo);
+        setIconImage(ControlPanel.APP_LOGO);
         this.pin = pin;
     }
 
