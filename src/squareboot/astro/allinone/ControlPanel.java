@@ -1,18 +1,17 @@
 package squareboot.astro.allinone;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.io.UncheckedIOException;
 
 /**
  * The control panel.
  *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.0
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public abstract class ControlPanel extends JFrame implements ActionListener {
@@ -92,20 +91,41 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         super(Main.APP_NAME + " control panel");
         setIconImage(APP_LOGO);
         setContentPane(parent);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+                int operation = JOptionPane.showConfirmDialog(null, "Save and exit, exit or cancel?", Main.APP_NAME,
+                        JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (operation == JOptionPane.YES_OPTION) {
+                    savePinConfig();
+                    Main.exit(Main.ExitCodes.OK);
 
-        saveButton.addActionListener(e -> {
-            savePinConfig();
-            dispose();
+                } else if (operation == JOptionPane.NO_OPTION) {
+                    Main.exit(Main.ExitCodes.OK);
+                }
+            }
         });
+
+        saveButton.addActionListener(e -> savePinConfig());
         sendConfigButton.addActionListener(e -> {
             Settings settings = savePinConfig();
             //settings.getFile();
             //TODO send config
         });
         runServerButton.addActionListener(e -> {
-            onRunServer();
-            dispose();
+            int indiPort = (int) indiPortField.getValue();
+            if (indiPort < 50) {
+                Main.err("Invalid INDI port!", true);
+
+            } else {
+                Settings settings = Main.getSettings();
+                settings.setIndiPort(indiPort);
+                settings.save();
+                onRunServer(indiPort);
+                dispose();
+            }
         });
 
         addDigitalPinButton.addActionListener(this);
@@ -134,7 +154,6 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         setBounds(200, 150, 600, 500);
         setVisible(true);
     }
-
 
     /**
      * Sets up the user interface.
@@ -176,16 +195,10 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      * @return the used {@link Settings} object. May be null if the saving failed.
      */
     private Settings savePinConfig() {
-        Main.err("Saving user input...");
-        int indiPort = (int) indiPortField.getValue();
-        if (indiPort < 50) {
-            Main.err("Invalid INDI port!", true);
-            return null;
-        }
+        Main.err("Saving settings...");
         Settings settings = Main.getSettings();
-        settings.setIndiPort(indiPort);
         try {
-            if (PinArray.checkPins(settings.getDigitalPins().toArray(), settings.getPwmPins().toArray())) {
+            if (!PinArray.checkPins(settings.getDigitalPins().toArray(), settings.getPwmPins().toArray())) {
                 Main.err("Duplicated pins found, please fix this in order to continue.", true);
                 return null;
             }
@@ -261,11 +274,11 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
     /**
      * Shows a dialog to the user asking for a new pin's number.
      *
-     * @return an {@link ArduinoPin} object representing the given pin.
+     * @return an {@link ArduinoPin} object representing the given pin, or {@code null}.
      */
     private ArduinoPin askNewPin() {
         boolean check = true;
-        int value = -1;
+        int pin = -1;
         do {
             try {
                 String input = JOptionPane.showInputDialog(this, "New pin",
@@ -273,18 +286,93 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
                 if (input == null) {
                     return null;
                 }
-                value = Integer.valueOf(input);
-                check = false;
+                pin = Integer.valueOf(input);
+                if ((pin < 2) || (pin > 99)) {
+                    Main.err("Invalid pin: " + pin + "\" is outside the allowed bounds (2 ≤ pin ≤ 99)!", true);
+
+                } else {
+                    check = false;
+                }
 
             } catch (NumberFormatException e) {
                 Main.err("Invalid pin! Must be a number.", true);
             }
         } while (check);
-        return new ArduinoPin(value, "Pin " + value);
+        return new ArduinoPin(pin, "Pin " + pin);
     }
 
     /**
      * Invoked when the user wants to run the server.
+     *
+     * @param port the port of the server.
      */
-    protected abstract void onRunServer();
+    protected abstract void onRunServer(int port);
+
+    /**
+     * Abstract {@link JDialog} to ask the user for a pin, its name and its value.
+     *
+     * @author SquareBoot
+     * @version 1.0
+     * @see DigitalPinDialog
+     * @see PwmPinDialog
+     */
+    public abstract static class AbstractPinDialog extends JDialog {
+
+        /**
+         * An Arduino pin.
+         */
+        protected ArduinoPin pin;
+
+        /**
+         * Class constructor.
+         *
+         * @param pin a pin.
+         */
+        public AbstractPinDialog(JFrame frame, ArduinoPin pin) {
+            super(frame, "Pin editor", ModalityType.DOCUMENT_MODAL);
+            setIconImage(APP_LOGO);
+            this.pin = pin;
+        }
+
+        protected void setUpPinFields(JSpinner pinSpinner, JTextField nameTextField) {
+            pinSpinner.addChangeListener(e -> this.pin.setPin((int) pinSpinner.getValue()));
+            pinSpinner.setValue(pin.getPin());
+
+            nameTextField.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    updateName();
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    updateName();
+                }
+
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    updateName();
+                }
+
+                public void updateName() {
+                    AbstractPinDialog.this.pin.setName(nameTextField.getText());
+                }
+            });
+            nameTextField.addActionListener(e -> dispose());
+            nameTextField.setText(pin.getName());
+        }
+
+        protected void showUp() {
+            setLocation(250, 250);
+            pack();
+            setVisible(true);
+        }
+
+        /**
+         * @return the stored pin.
+         */
+        public ArduinoPin getArduinoPin() {
+            return pin;
+        }
+    }
 }

@@ -11,7 +11,6 @@ import squareboot.astro.allinone.io.SerialMessageListener;
 import squareboot.astro.allinone.io.SerialPortImpl;
 import squareboot.astro.allinone.io.SerialPortMultiplexer;
 
-import javax.swing.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -22,7 +21,7 @@ import java.util.HashMap;
  * INDI Arduino pin driver.
  *
  * @author SquareBoot
- * @version 1.1
+ * @version 2.0
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandler, SerialMessageListener {
@@ -84,7 +83,11 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     /**
      * Map that bins all the INDI elements of {@link #digitalPinProps} and {@link #pwmPinsProp} to their correspondent pins.
      */
-    private HashMap<INDIElement, ArduinoPin> pinsMap = new HashMap<>();
+    private HashMap<INDIElement, ArduinoPin> pinsMap;
+    /**
+     * MoonLite virtual serial port RO field.
+     * */
+    private INDITextProperty moonLitePortProp;
 
     /**
      * Class constructor. Initializes the INDI properties and elements and looks for available serial ports.
@@ -135,14 +138,14 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
         }
         portsListProp = new INDISwitchProperty(this, "Available ports", "Available ports", "Serial connection",
                 PropertyStates.OK, PropertyPermissions.RW, Constants.SwitchRules.ONE_OF_MANY);
-        if (propertyAdded) {
-            addProperty(portsListProp);
-        }
-        searchElem = new INDISwitchElement(portsListProp, "Refresh", Constants.SwitchStatus.OFF);
+        searchElem = new INDISwitchElement(portsListProp, "Refresh", Constants.SwitchStatus.ON);
         portsListElements = new HashMap<>();
         for (String port : SerialPortImpl.scanSerialPorts()) {
             portsListElements.put(new INDISwitchElement(portsListProp, port, port,
-                    port.equals(serialPortString) ? Constants.SwitchStatus.ON : Constants.SwitchStatus.OFF), port);
+                    Constants.SwitchStatus.OFF), port);
+        }
+        if (propertyAdded) {
+            addProperty(portsListProp);
         }
     }
 
@@ -166,7 +169,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
             }
         }
         for (ArduinoPin pin : pinsMap.values()) {
-            pin.setPinVal(new PinValue());
+            pin.setPinValueObj(new PinValue());
         }
         try {
             ArrayList<INDIProperty> properties = getPropertiesAsList();
@@ -219,6 +222,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                     throw new IllegalStateException(e.getMessage(), e);
                 }
 
+                pinsMap = new HashMap<>();
                 digitalPinProps = new INDISwitchProperty(this, "Digital pins", "Digital pins", "Manage Pins",
                         PropertyStates.OK, PropertyPermissions.RW, Constants.SwitchRules.ANY_OF_MANY);
                 for (ArduinoPin pin : switchPins) {
@@ -227,7 +231,6 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                     pinsMap.put(new INDISwitchElement(digitalPinProps, "Pin " + pin.getPin(),
                             pin.getName(), pin.getValueIndi()), pin);
                 }
-
                 pwmPinsProp = new INDINumberProperty(this, "PWM pins", "PWM pins", "Manage Pins",
                         PropertyStates.OK, PropertyPermissions.RW);
                 for (ArduinoPin pin : pwmPins) {
@@ -240,19 +243,17 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                 Main.err("Loading port forwarder (socat)...");
                 multiplexer = new SerialPortMultiplexer(serialPort);
                 String mockedPort = multiplexer.getMockedPort();
-                Main.info("Connect MoonLite to port " + mockedPort);
-                if (Main.isGUIEnabled()) {
-                    SwingUtilities.invokeLater(() ->
-                            new ServerMiniWindow(mockedPort, this));
-
-                } else {
-                    Main.info("Terminate to stop.");
-                }
+                moonLitePortProp = new INDITextProperty(this, "MoonLite port", "MoonLite port",
+                        "Serial connection", PropertyStates.OK, PropertyPermissions.RO);
+                new INDITextElement(moonLitePortProp, "MoonLite port", "MoonLite port", mockedPort);
+                addProperty(moonLitePortProp);
                 addProperty(digitalPinProps);
                 addProperty(pwmPinsProp);
                 connectElem.setValue(Constants.SwitchStatus.ON);
                 disconnectElem.setValue(Constants.SwitchStatus.OFF);
                 connectionProp.setState(PropertyStates.OK);
+                Main.info("Connect MoonLite to port " + mockedPort);
+                Main.info("Terminate to stop.");
 
             } catch (ConnectionError e) {
                 connectionProp.setState(PropertyStates.ALERT);
@@ -289,8 +290,8 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                 INDINumberElement element = eAV.getElement();
                 ArduinoPin pin = pinsMap.get(element);
                 PinValue newValue = new PinValue(PinValue.ValueType.PERCENTAGE, eAV.getValue().intValue());
-                if (!newValue.equals(pin.getPinVal())) {
-                    pin.setPinVal(newValue);
+                if (!newValue.equals(pin.getPinValueObj())) {
+                    pin.setPinValueObj(newValue);
                     element.setValue((double) pin.getValuePercentage());
                     updatePin(pin);
                 }
@@ -337,8 +338,8 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                 INDISwitchElement element = eAV.getElement();
                 ArduinoPin pin = pinsMap.get(element);
                 PinValue newValue = new PinValue(PinValue.ValueType.INDI, eAV.getValue());
-                if (!newValue.equals(pin.getPinVal())) {
-                    pin.setPinVal(newValue);
+                if (!newValue.equals(pin.getPinValueObj())) {
+                    pin.setPinValueObj(newValue);
                     element.setValue(newValue.getValueIndi());
                     updatePin(pin);
                 }
@@ -366,8 +367,14 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                                 multiplexer.stop();
                                 serialPort = null;
                                 multiplexer = null;
+                                removeProperty(moonLitePortProp);
+                                moonLitePortProp = null;
                                 removeProperty(digitalPinProps);
+                                digitalPinProps = null;
                                 removeProperty(pwmPinsProp);
+                                pwmPinsProp = null;
+                                pinsMap.clear();
+                                pinsMap = null;
                                 disconnectElem.setValue(Constants.SwitchStatus.ON);
                                 connectElem.setValue(Constants.SwitchStatus.OFF);
                                 connectionProp.setState(PropertyStates.OK);
@@ -408,7 +415,6 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
             }
             portsListProp.setState(PropertyStates.OK);
             try {
-                //FIXME: Switch (Available ports) value not value (not following its rule).
                 updateProperty(portsListProp);
                 updateProperty(serialPortFieldProp);
 

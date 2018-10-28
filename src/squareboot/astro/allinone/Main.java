@@ -9,10 +9,11 @@ import java.io.File;
 import java.io.PrintWriter;
 
 /**
- * The main class of the application.
+ * The main class of the application. Interprets the input commands and
+ * runs the server, the driver or the control panel.
  *
  * @author SquareBoot
- * @version 1.1
+ * @version 2.0
  */
 @SuppressWarnings({"WeakerAccess", "unused"})
 public class Main {
@@ -84,9 +85,12 @@ public class Main {
                 autoConnectSerial = true;
             }
 
+            int serverPort = settings.getIndiPort();
             if (serverMode) {
                 try {
-                    settings.setIndiPort(Integer.valueOf(line.getOptionValue('p')));
+                    serverPort = Integer.valueOf(line.getOptionValue('p'));
+                    settings.setIndiPort(serverPort);
+                    settings.save();
 
                 } catch (NumberFormatException e) {
                     exit(ExitCodes.PARSING_ERROR);
@@ -106,14 +110,13 @@ public class Main {
                 }
                 SwingUtilities.invokeLater(() -> new ControlPanel() {
                     @Override
-                    protected void onRunServer() {
-
+                    protected void onRunServer(int port) {
+                        runServer(port);
                     }
                 });
 
             } else if (serverMode && (!controlPanel && !driverOnly)) {
-                server = new INDIServer(settings.getIndiPort());
-                server.loadJava(INDIArduinoDriver.class);
+                runServer(serverPort);
 
             } else if (driverOnly && (!controlPanel && !serverMode)) {
                 new INDIArduinoDriver(System.in, System.out, autoConnectSerial);
@@ -130,6 +133,14 @@ public class Main {
                             "\n\nDistributed under the Apache License, Version 2.0, by SquareBoot");
             exit(ExitCodes.PARSING_ERROR);
         }
+    }
+
+    /**
+     * Runs the server with the INDI driver.
+     */
+    private static void runServer(int port) {
+        server = new INDIServer(port);
+        server.loadJava(INDIArduinoDriver.class);
     }
 
     /**
@@ -264,6 +275,7 @@ public class Main {
      * @version 0.1
      */
     public enum ExitCodes {
+        OK(0),
         NO_DATA_DIR(5, "Please add option --settings=/path/to/settings!"),
         PARSING_ERROR(6, "Unable to parse the INDI server port!"),
         INVALID_OPTIONS(7),

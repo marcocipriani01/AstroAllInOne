@@ -4,7 +4,7 @@ package squareboot.astro.allinone.io;
  * Exception related to connections, sockets, communication and data transfer in general.
  *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.0
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class ConnectionError extends RuntimeException {

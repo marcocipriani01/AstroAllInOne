@@ -11,7 +11,7 @@ import java.util.ArrayList;
  * (see {@link ConnectionError#getType()}, {@link ConnectionError#getCause()} and {@link ConnectionError#getMessage()}).
  *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.1
  * @see <a href="https://github.com/scream3r/java-simple-serial-connector">jSSC on GitHub</a>
  * @see <a href="https://code.google.com/archive/p/java-simple-serial-connector/wikis/jSSC_examples.wiki">jSSC examples - Google Code Archive</a>
  */
