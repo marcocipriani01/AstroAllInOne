@@ -11,23 +11,15 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="7b6582ec-1eba-4fb4-91a8-e78dc243580b" name="Default" comment="Added SCP config sender">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deb-builder/AstroAllInOne.deb" beforeDir="false" afterPath="$PROJECT_DIR$/deb-builder/AstroAllInOne.deb" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deb-builder/AstroAllInOne/DEBIAN/control" beforeDir="false" afterPath="$PROJECT_DIR$/deb-builder/AstroAllInOne/DEBIAN/control" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/AstroAllInOne/AstroAllInOne.jar" beforeDir="false" afterPath="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/AstroAllInOne/AstroAllInOne.jar" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications/AstroAllInOne-nogui.desktop" beforeDir="false" afterPath="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications/AstroAllInOne-cli-server.desktop" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications/AstroAllInOne.desktop" beforeDir="false" afterPath="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications/AstroAllInOne.desktop" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/deb-builder/build.sh" beforeDir="false" afterPath="$PROJECT_DIR$/deb-builder/build.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" beforeDir="false" afterPath="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/squareboot/astro/allinone/ControlPanel.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/squareboot/astro/allinone/ControlPanel.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/squareboot/astro/allinone/Main.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/squareboot/astro/allinone/Main.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/squareboot/astro/allinone/indi/INDIArduinoDriver.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/squareboot/astro/allinone/indi/INDIArduinoDriver.java" afterDir="false" />
-    </list>
-    <list id="d568ad25-11e9-4c1c-a8ee-b1c0c066124a" name="Revert &quot;Updated build system&quot;" comment="Revert &quot;Updated build system&quot;&#10;&#10;This reverts commit 7b2e6a1" />
-    <list id="ee47c326-339d-46ab-a847-f3a6a6f7e63a" name="Revert: Completely rewritten, almost OK" comment="">
+      <change afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/deb-builder/AstroAllInOne.deb" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.form" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/AstroAllInOne/AstroAllInOne.jar" beforeDir="false" afterPath="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/AstroAllInOne/AstroAllInOne.jar" afterDir="false" />
     </list>
+    <list id="d568ad25-11e9-4c1c-a8ee-b1c0c066124a" name="Revert &quot;Updated build system&quot;" comment="Revert &quot;Updated build system&quot;&#10;&#10;This reverts commit 7b2e6a1" />
+    <list id="ee47c326-339d-46ab-a847-f3a6a6f7e63a" name="Revert: Completely rewritten, almost OK" comment="" />
     <list id="b515a51b-5fe4-442d-a0c1-a1bd00652ac8" name="Updated build system" comment="" />
     <ignored path="$PROJECT_DIR$/out/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -40,7 +32,7 @@
     <session id="1252409286">
       <usages-collector id="statistics.lifecycle.project">
         <counts>
-          <entry key="project.closed" value="17" />
+          <entry key="project.closed" value="18" />
           <entry key="project.open.time.11" value="1" />
           <entry key="project.open.time.14" value="1" />
           <entry key="project.open.time.15" value="2" />
@@ -50,8 +42,9 @@
           <entry key="project.open.time.19" value="3" />
           <entry key="project.open.time.21" value="2" />
           <entry key="project.open.time.27" value="1" />
+          <entry key="project.open.time.3" value="1" />
           <entry key="project.open.time.35" value="1" />
-          <entry key="project.opened" value="18" />
+          <entry key="project.opened" value="19" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
@@ -60,28 +53,28 @@
           <entry key="astroallinone" value="5" />
           <entry key="class" value="15" />
           <entry key="conffiles" value="2" />
-          <entry key="control" value="2" />
+          <entry key="control" value="3" />
           <entry key="desktop" value="2" />
-          <entry key="form" value="8" />
-          <entry key="java" value="123" />
+          <entry key="form" value="9" />
+          <entry key="java" value="124" />
           <entry key="md" value="2" />
           <entry key="png" value="3" />
           <entry key="sh" value="7" />
           <entry key="snippet" value="1" />
-          <entry key="xml" value="8" />
+          <entry key="xml" value="10" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="Bash" value="8" />
           <entry key="CLASS" value="15" />
-          <entry key="GUI_DESIGNER_FORM" value="8" />
+          <entry key="GUI_DESIGNER_FORM" value="9" />
           <entry key="Image" value="3" />
-          <entry key="JAVA" value="123" />
+          <entry key="JAVA" value="124" />
           <entry key="Manifest" value="1" />
-          <entry key="PLAIN_TEXT" value="12" />
+          <entry key="PLAIN_TEXT" value="13" />
           <entry key="Scratch" value="1" />
-          <entry key="XML" value="8" />
+          <entry key="XML" value="10" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
@@ -89,7 +82,7 @@
           <entry key="MF" value="2" />
           <entry key="control" value="1" />
           <entry key="desktop" value="132" />
-          <entry key="java" value="17579" />
+          <entry key="java" value="17665" />
           <entry key="sh" value="722" />
           <entry key="txt" value="522" />
         </counts>
@@ -97,7 +90,7 @@
       <usages-collector id="statistics.file.types.edit">
         <counts>
           <entry key="Bash" value="722" />
-          <entry key="JAVA" value="17579" />
+          <entry key="JAVA" value="17665" />
           <entry key="Manifest" value="2" />
           <entry key="PLAIN_TEXT" value="655" />
         </counts>
@@ -109,8 +102,8 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/squareboot/astro/allinone/Main.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="289">
-              <caret line="121" column="19" lean-forward="true" selection-start-line="121" selection-start-column="19" selection-end-line="121" selection-end-column="19" />
+            <state relative-caret-position="340">
+              <caret line="34" column="7" lean-forward="true" selection-start-line="34" selection-start-column="7" selection-end-line="34" selection-end-column="7" />
               <folding>
                 <element signature="docComment;field#APP_NAME#0;class#Main#0" />
                 <element signature="docComment;field#verboseMode#0;class#Main#0" />
@@ -118,6 +111,8 @@
                 <element signature="docComment;field#server#0;class#Main#0" />
                 <element signature="docComment;field#showGUI#0;class#Main#0" />
                 <element signature="docComment;method#main#0;class#Main#0" />
+                <element signature="e#3888#4234#0" expanded="true" />
+                <element signature="e#4233#4234#0" expanded="true" />
                 <element signature="docComment;method#runServer#0;class#Main#0" />
                 <element signature="docComment;method#isVerboseMode#0;class#Main#0" />
                 <element signature="docComment;method#isGUIEnabled#0;class#Main#0" />
@@ -142,45 +137,6 @@
                 <element signature="docComment;method#getMessage#0;class#ExitCodes#0;class#Main#0" />
                 <element signature="docComment;method#getCode#0;class#ExitCodes#0;class#Main#0" />
               </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/bin/astroallinone">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="119">
-              <caret line="7" column="81" lean-forward="true" selection-start-line="7" selection-start-column="81" selection-end-line="7" selection-end-column="81" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/squareboot/astro/allinone/indi/INDIArduinoDriver.java">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="119">
-              <caret line="316" column="63" selection-start-line="316" selection-start-column="63" selection-end-line="316" selection-end-column="63" />
-              <folding>
-                <element signature="imports" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications/AstroAllInOne.desktop">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="153">
-              <caret line="9" column="18" selection-start-line="9" selection-start-column="18" selection-end-line="9" selection-end-column="18" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications/AstroAllInOne-cli-server.desktop">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="34">
-              <caret line="2" column="29" selection-start-line="2" selection-start-column="29" selection-end-line="2" selection-end-column="29" />
             </state>
           </provider>
         </entry>
@@ -305,8 +261,6 @@
         <option value="$PROJECT_DIR$/src/squareboot/astro/allinone/ScpTo.java" />
         <option value="$PROJECT_DIR$/src/squareboot/astro/allinone/ScpUploader.java" />
         <option value="$PROJECT_DIR$/src/squareboot/astro/allinone/io/ScpUploader.java" />
-        <option value="$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.form" />
-        <option value="$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.java" />
         <option value="$PROJECT_DIR$/deb-builder/build.sh" />
         <option value="$PROJECT_DIR$/deb-builder/AstroAllInOne/DEBIAN/control" />
         <option value="$PROJECT_DIR$/src/META-INF/MANIFEST.MF" />
@@ -316,6 +270,8 @@
         <option value="$PROJECT_DIR$/src/squareboot/astro/allinone/indi/INDIArduinoDriver.java" />
         <option value="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications/AstroAllInOne-cli-server.desktop" />
         <option value="$PROJECT_DIR$/src/squareboot/astro/allinone/Main.java" />
+        <option value="$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.form" />
+        <option value="$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.java" />
       </list>
     </option>
   </component>
@@ -326,10 +282,10 @@
     </treeState>
   </component>
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="1969" />
-    <option name="y" value="98" />
-    <option name="width" value="1056" />
-    <option name="height" value="891" />
+    <option name="x" value="2326" />
+    <option name="y" value="32" />
+    <option name="width" value="960" />
+    <option name="height" value="1048" />
   </component>
   <component name="ProjectInspectionProfilesVisibleTreeState">
     <entry key="Project Default">
@@ -354,13 +310,17 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scope" />
       <pane id="ProjectPane">
         <subPane>
           <expand>
             <path>
               <item name="AstroAllInOne" type="b2602c69:ProjectViewProjectNode" />
               <item name="AstroAllInOne" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="AstroAllInOne" type="b2602c69:ProjectViewProjectNode" />
+              <item name="AstroAllInOne" type="462c0819:PsiDirectoryNode" />
+              <item name=".idea" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="AstroAllInOne" type="b2602c69:ProjectViewProjectNode" />
@@ -472,6 +432,7 @@
           <select />
         </subPane>
       </pane>
+      <pane id="Scope" />
     </panes>
   </component>
   <component name="PropertiesComponent">
@@ -481,7 +442,7 @@
     <property name="com.intellij.ide.scratch.LRUPopupBuilder$2/Languages" value="TEXT&#10;JAVA" />
     <property name="extract.method.default.visibility" value="private" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$/lib/jsch.jar!/" />
-    <property name="project.structure.last.edited" value="Artifacts" />
+    <property name="project.structure.last.edited" value="Libraries" />
     <property name="project.structure.proportion" value="0.15" />
     <property name="project.structure.side.proportion" value="0.2" />
     <property name="restartRequiresConfirmation" value="false" />
@@ -493,23 +454,23 @@
       <recent name="squareboot.astro.allinone.ControlPanel" />
       <recent name="squareboot.astro.allinone.Application" />
     </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/.idea" />
+      <recent name="$PROJECT_DIR$/lib" />
+      <recent name="$PROJECT_DIR$/src/squareboot/astro/allinone" />
+      <recent name="$PROJECT_DIR$/src" />
+      <recent name="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications" />
+    </key>
+    <key name="CopyClassDialog.RECENTS_KEY">
+      <recent name="squareboot.astro.allinone.io" />
+      <recent name="squareboot.astro.allinone" />
+    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/squareboot/astro/allinone" />
       <recent name="$PROJECT_DIR$/src" />
       <recent name="$PROJECT_DIR$/src/squareboot" />
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/lib" />
-    </key>
-    <key name="CopyClassDialog.RECENTS_KEY">
-      <recent name="squareboot.astro.allinone.io" />
-      <recent name="squareboot.astro.allinone" />
-    </key>
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/lib" />
-      <recent name="$PROJECT_DIR$/src/squareboot/astro/allinone" />
-      <recent name="$PROJECT_DIR$/src" />
-      <recent name="$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications" />
-      <recent name="$PROJECT_DIR$" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -789,21 +750,21 @@
       <window_info id="Designer" order="0" />
       <window_info id="UI Designer" order="1" />
       <window_info id="Favorites" order="2" side_tool="true" />
-      <window_info content_ui="combo" id="Project" order="3" weight="0.26124197" />
+      <window_info active="true" content_ui="combo" id="Project" order="3" visible="true" weight="0.26124197" />
       <window_info id="Structure" order="4" weight="0.16809422" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.37386364" />
       <window_info anchor="bottom" id="Debug" order="2" weight="0.4" />
       <window_info anchor="bottom" id="Cvs" order="3" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="4" weight="0.4" />
-      <window_info active="true" anchor="bottom" id="Run" order="5" sideWeight="0.4969419" visible="true" weight="0.33522728" />
+      <window_info anchor="bottom" id="Run" order="5" sideWeight="0.4969419" weight="0.33522728" />
       <window_info anchor="bottom" id="TODO" order="6" weight="0.3272727" />
       <window_info anchor="bottom" id="Event Log" order="7" sideWeight="0.50267667" side_tool="true" weight="0.2965909" />
-      <window_info anchor="bottom" id="Version Control" order="8" sideWeight="0.49923897" weight="0.33068183" />
+      <window_info anchor="bottom" id="Version Control" order="8" show_stripe_button="false" sideWeight="0.49923897" weight="0.33068183" />
       <window_info anchor="bottom" id="Terminal" order="9" sideWeight="0.49732333" weight="0.2965909" />
-      <window_info anchor="bottom" id="Statistic" order="10" weight="0.67727274" />
-      <window_info anchor="bottom" id="Messages" order="11" weight="0.3284091" />
-      <window_info anchor="bottom" id="Inspection Results" order="12" weight="0.3284091" />
+      <window_info anchor="bottom" id="Messages" order="10" weight="0.3284091" />
+      <window_info anchor="bottom" id="Inspection Results" order="11" weight="0.3284091" />
+      <window_info anchor="bottom" id="Statistic" order="12" weight="0.67727274" />
       <window_info anchor="right" id="Commander" order="0" weight="0.4" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="1" weight="0.25" />
       <window_info anchor="right" id="Palette" order="2" />
@@ -873,13 +834,6 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/I4J/src/laazotea/indi/driver/INDIElement.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="419">
-          <caret line="193" column="25" selection-start-line="193" selection-start-column="25" selection-end-line="193" selection-end-column="25" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/I4J/src/laazotea/indi/driver/INDIDriver.java">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="175">
@@ -1157,21 +1111,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.form">
-      <provider selected="true" editor-type-id="ui-designer" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.java">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="7" column="75" selection-start-line="7" selection-start-column="75" selection-end-line="7" selection-end-column="75" />
-          <folding>
-            <element signature="imports" expanded="true" />
-            <element signature="e#1132#1288#0" expanded="true" />
-            <element signature="e#1287#1288#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/DEBIAN/conffiles">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
@@ -1179,13 +1118,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="34">
           <caret line="2" column="31" selection-start-line="2" selection-start-column="31" selection-end-line="2" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/DEBIAN/control">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="85">
-          <caret line="5" column="10" selection-start-line="5" selection-start-column="10" selection-end-line="5" selection-end-column="10" />
         </state>
       </provider>
     </entry>
@@ -1241,13 +1173,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications/AstroAllInOne.desktop">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="153">
-          <caret line="9" column="18" selection-start-line="9" selection-start-column="18" selection-end-line="9" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/deb-builder/build.sh">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="221">
@@ -1255,13 +1180,20 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/squareboot/astro/allinone/indi/INDIArduinoDriver.java">
+    <entry file="file://$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.form">
+      <provider selected="true" editor-type-id="ui-designer" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/DEBIAN/control">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="5" column="10" selection-start-line="5" selection-start-column="10" selection-end-line="5" selection-end-column="10" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/bin/astroallinone">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="119">
-          <caret line="316" column="63" selection-start-line="316" selection-start-column="63" selection-end-line="316" selection-end-column="63" />
-          <folding>
-            <element signature="imports" expanded="true" />
-          </folding>
+          <caret line="7" column="81" selection-start-line="7" selection-start-column="81" selection-end-line="7" selection-end-column="81" />
         </state>
       </provider>
     </entry>
@@ -1272,17 +1204,38 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/bin/astroallinone">
+    <entry file="file://$PROJECT_DIR$/deb-builder/AstroAllInOne/usr/share/applications/AstroAllInOne.desktop">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="7" column="81" lean-forward="true" selection-start-line="7" selection-start-column="81" selection-end-line="7" selection-end-column="81" />
+        <state relative-caret-position="153">
+          <caret line="9" column="18" selection-start-line="9" selection-start-column="18" selection-end-line="9" selection-end-column="18" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/squareboot/astro/allinone/indi/INDIArduinoDriver.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5004">
+          <caret line="469" column="1" selection-start-line="469" selection-start-column="1" selection-end-line="469" selection-end-column="1" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/squareboot/astro/allinone/ServerMiniWindow.java">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="7" column="80" selection-start-line="7" selection-start-column="80" selection-end-line="7" selection-end-column="80" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/.idea/vcs.xml">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="85">
+          <caret line="5" column="10" lean-forward="true" selection-start-line="5" selection-start-column="10" selection-end-line="5" selection-end-column="10" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/squareboot/astro/allinone/Main.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="289">
-          <caret line="121" column="19" lean-forward="true" selection-start-line="121" selection-start-column="19" selection-end-line="121" selection-end-column="19" />
+        <state relative-caret-position="340">
+          <caret line="34" column="7" lean-forward="true" selection-start-line="34" selection-start-column="7" selection-end-line="34" selection-end-column="7" />
           <folding>
             <element signature="docComment;field#APP_NAME#0;class#Main#0" />
             <element signature="docComment;field#verboseMode#0;class#Main#0" />
@@ -1290,6 +1243,8 @@
             <element signature="docComment;field#server#0;class#Main#0" />
             <element signature="docComment;field#showGUI#0;class#Main#0" />
             <element signature="docComment;method#main#0;class#Main#0" />
+            <element signature="e#3888#4234#0" expanded="true" />
+            <element signature="e#4233#4234#0" expanded="true" />
             <element signature="docComment;method#runServer#0;class#Main#0" />
             <element signature="docComment;method#isVerboseMode#0;class#Main#0" />
             <element signature="docComment;method#isGUIEnabled#0;class#Main#0" />
