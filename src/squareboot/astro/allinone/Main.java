@@ -225,6 +225,23 @@ public class Main {
     /**
      * Reports an error to the user.
      *
+     * @param msg          a message that will be printed to {@link System#err} if verbose mode is on
+     * @param e            the exception you want to print the stacktrace of.
+     * @param dialogParent parent window for the dialog.
+     */
+    public static void err(String msg, Exception e, JFrame dialogParent) {
+        if (verboseMode) {
+            System.err.println(msg);
+            e.printStackTrace();
+        }
+        if (showGUI) {
+            JOptionPane.showMessageDialog(dialogParent, msg, APP_NAME, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Reports an error to the user.
+     *
      * @param msg        a message that will be printed to {@link System#err} if verbose mode is on
      * @param showDialog set to true to show a visual dialog with the same message.
      */
@@ -234,6 +251,21 @@ public class Main {
         }
         if (showGUI && showDialog) {
             JOptionPane.showMessageDialog(null, msg, APP_NAME, JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    /**
+     * Reports an error to the user.
+     *
+     * @param msg          a message that will be printed to {@link System#err} if verbose mode is on
+     * @param dialogParent parent window for the dialog.
+     */
+    public static void err(String msg, JFrame dialogParent) {
+        if (verboseMode) {
+            System.err.println(msg);
+        }
+        if (showGUI) {
+            JOptionPane.showMessageDialog(dialogParent, msg, APP_NAME, JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -256,6 +288,19 @@ public class Main {
         System.err.println(msg);
         if (showGUI && showDialog) {
             JOptionPane.showMessageDialog(null, msg, APP_NAME, JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
+
+    /**
+     * Reports an info to the user.
+     *
+     * @param msg          a message that will be printed to {@link System#err} ({@link System#out} may have been used for the INDI driver).
+     * @param dialogParent parent window for the dialog.
+     */
+    public static void info(String msg, JFrame dialogParent) {
+        System.err.println(msg);
+        if (showGUI) {
+            JOptionPane.showMessageDialog(dialogParent, msg, APP_NAME, JOptionPane.INFORMATION_MESSAGE);
         }
     }
 

@@ -5,7 +5,7 @@ import laazotea.indi.driver.INDIDriver;
 import laazotea.indi.server.DefaultINDIServer;
 import laazotea.indi.server.INDIClient;
 import squareboot.astro.allinone.Main;
-import squareboot.astro.allinone.io.ConnectionError;
+import squareboot.astro.allinone.io.ConnectionException;
 
 import java.net.Socket;
 import java.util.Arrays;
@@ -50,7 +50,7 @@ public class INDIServer extends DefaultINDIServer {
             loadJavaDriversFromJAR(jar);
 
         } catch (INDIException e) {
-            throw new ConnectionError("Error during driver loading!", ConnectionError.Type.IO);
+            throw new ConnectionException("Error during driver loading!", ConnectionException.Type.IO);
         }
     }
 
@@ -96,7 +96,7 @@ public class INDIServer extends DefaultINDIServer {
             loadJavaDriver(driver);
 
         } catch (INDIException e) {
-            throw new ConnectionError("Error during driver loading!", ConnectionError.Type.IO);
+            throw new ConnectionException("Error during driver loading!", ConnectionException.Type.IO);
         }
     }
 
@@ -121,7 +121,7 @@ public class INDIServer extends DefaultINDIServer {
             loadNativeDriver(path);
 
         } catch (INDIException e) {
-            throw new ConnectionError("Error during driver loading!", ConnectionError.Type.IO);
+            throw new ConnectionException("Error during driver loading!", ConnectionException.Type.IO);
         }
     }
 
@@ -163,7 +163,7 @@ public class INDIServer extends DefaultINDIServer {
     @Override
     public void startListeningToClients() {
         if (isServerRunning()) {
-            throw new ConnectionError("Server already started!", ConnectionError.Type.ALREADY_STARTED);
+            throw new ConnectionException("Server already started!", ConnectionException.Type.ALREADY_STARTED);
 
         } else {
             super.startListeningToClients();
@@ -190,7 +190,7 @@ public class INDIServer extends DefaultINDIServer {
             super.stopServer();
 
         } else {
-            throw new ConnectionError("Server not started!", ConnectionError.Type.NOT_STARTED);
+            throw new ConnectionException("Server not started!", ConnectionException.Type.NOT_STARTED);
         }
     }
 
@@ -206,7 +206,7 @@ public class INDIServer extends DefaultINDIServer {
             loadNetworkDriver(host, port);
 
         } catch (INDIException e) {
-            throw new ConnectionError("Unable to connect to remove server!", e, ConnectionError.Type.CONNECTION);
+            throw new ConnectionException("Unable to connect to remove server!", e, ConnectionException.Type.CONNECTION);
         }
     }
 

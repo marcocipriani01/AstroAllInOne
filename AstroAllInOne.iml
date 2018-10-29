@@ -11,5 +11,6 @@
     <orderEntry type="library" name="commons-cli" level="project" />
     <orderEntry type="library" name="Gson" level="project" />
     <orderEntry type="library" name="jSSC" level="project" />
+    <orderEntry type="library" name="JSch" level="project" />
   </component>
 </module>

@@ -7,8 +7,8 @@ import java.util.ArrayList;
 /**
  * Abstract manager for serial ports with listeners.
  * Provides a simple way to connect your board, to send and to receive data and to get a list containing all the available ports.
- * For each error, this class will use the {@link ConnectionError} class to give you a better explanation of the error
- * (see {@link ConnectionError#getType()}, {@link ConnectionError#getCause()} and {@link ConnectionError#getMessage()}).
+ * For each error, this class will use the {@link ConnectionException} class to give you a better explanation of the error
+ * (see {@link ConnectionException#getType()}, {@link ConnectionException#getCause()} and {@link ConnectionException#getMessage()}).
  *
  * @author SquareBoot
  * @version 1.1
@@ -114,24 +114,24 @@ public class SerialPortImpl implements SerialPortEventListener {
             serialPort.addEventListener(this);
 
         } catch (SerialPortException e) {
-            ConnectionError.Type type;
+            ConnectionException.Type type;
             switch (e.getExceptionType()) {
                 case SerialPortException.TYPE_PORT_BUSY:
                 case SerialPortException.TYPE_PORT_ALREADY_OPENED: {
-                    type = ConnectionError.Type.PORT_BUSY;
+                    type = ConnectionException.Type.PORT_BUSY;
                     break;
                 }
 
                 case SerialPortException.TYPE_PORT_NOT_FOUND: {
-                    type = ConnectionError.Type.PORT_NOT_FOUND;
+                    type = ConnectionException.Type.PORT_NOT_FOUND;
                     break;
                 }
 
                 default: {
-                    type = ConnectionError.Type.UNKNOWN;
+                    type = ConnectionException.Type.UNKNOWN;
                 }
             }
-            throw new ConnectionError("An error occurred during connection!", e, type);
+            throw new ConnectionException("An error occurred during connection!", e, type);
         }
     }
 
@@ -152,12 +152,12 @@ public class SerialPortImpl implements SerialPortEventListener {
     public void disconnect() {
         try {
             if (!serialPort.closePort()) {
-                throw new ConnectionError("Something went wrong during the disconnection!", ConnectionError.Type.UNABLE_TO_DISCONNECT);
+                throw new ConnectionException("Something went wrong during the disconnection!", ConnectionException.Type.UNABLE_TO_DISCONNECT);
             }
             listeners.clear();
 
         } catch (SerialPortException e) {
-            throw new ConnectionError("Something went wrong during the disconnection!", e, ConnectionError.Type.UNABLE_TO_DISCONNECT);
+            throw new ConnectionException("Something went wrong during the disconnection!", e, ConnectionException.Type.UNABLE_TO_DISCONNECT);
         }
     }
 
@@ -182,33 +182,33 @@ public class SerialPortImpl implements SerialPortEventListener {
             new Thread(() -> {
                 try {
                     if (!serialPort.writeBytes(message.getBytes())) {
-                        notifyError(new ConnectionError("An error occurred while sending the message!",
-                                ConnectionError.Type.OUTPUT));
+                        notifyError(new ConnectionException("An error occurred while sending the message!",
+                                ConnectionException.Type.OUTPUT));
                     }
 
                 } catch (SerialPortException e) {
-                    ConnectionError.Type type;
+                    ConnectionException.Type type;
                     switch (e.getExceptionType()) {
                         case SerialPortException.TYPE_PORT_BUSY: {
-                            type = ConnectionError.Type.BUSY;
+                            type = ConnectionException.Type.BUSY;
                             break;
                         }
 
                         case SerialPortException.TYPE_PORT_NOT_OPENED: {
-                            type = ConnectionError.Type.NOT_CONNECTED;
+                            type = ConnectionException.Type.NOT_CONNECTED;
                             break;
                         }
 
                         default: {
-                            type = ConnectionError.Type.UNKNOWN;
+                            type = ConnectionException.Type.UNKNOWN;
                         }
                     }
-                    notifyError(new ConnectionError("An error occurred during data transfer!", e, type));
+                    notifyError(new ConnectionException("An error occurred during data transfer!", e, type));
                 }
             }, "Serial data sender").start();
 
         } else {
-            throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
+            throw new ConnectionException(ConnectionException.Type.NOT_CONNECTED);
         }
     }
 
@@ -303,8 +303,8 @@ public class SerialPortImpl implements SerialPortEventListener {
             notifyListener(serialPort.readString());
 
         } catch (SerialPortException e) {
-            notifyError(new ConnectionError("An error occurred while receiving data from the serial port!",
-                    e, ConnectionError.Type.INPUT));
+            notifyError(new ConnectionException("An error occurred while receiving data from the serial port!",
+                    e, ConnectionException.Type.INPUT));
         }
     }
 

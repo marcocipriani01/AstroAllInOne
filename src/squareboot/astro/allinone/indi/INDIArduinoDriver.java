@@ -6,11 +6,12 @@ import laazotea.indi.Constants.PropertyStates;
 import laazotea.indi.INDIException;
 import laazotea.indi.driver.*;
 import squareboot.astro.allinone.*;
-import squareboot.astro.allinone.io.ConnectionError;
+import squareboot.astro.allinone.io.ConnectionException;
 import squareboot.astro.allinone.io.SerialMessageListener;
 import squareboot.astro.allinone.io.SerialPortImpl;
 import squareboot.astro.allinone.io.SerialPortMultiplexer;
 
+import javax.swing.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -155,7 +156,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
      */
     public void forceReboot() {
         if (!serialPort.isConnected()) {
-            throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
+            throw new ConnectionException(ConnectionException.Type.NOT_CONNECTED);
         }
         Main.info("Force reboot invoked!");
         serialPort.print(":RS#");
@@ -252,10 +253,16 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                 connectElem.setValue(Constants.SwitchStatus.ON);
                 disconnectElem.setValue(Constants.SwitchStatus.OFF);
                 connectionProp.setState(PropertyStates.OK);
-                Main.info("Connect MoonLite to port " + mockedPort);
-                Main.info("Terminate to stop.");
+                if (Main.isGUIEnabled()) {
+                    SwingUtilities.invokeLater(() ->
+                            new ServerMiniWindow(mockedPort, this));
 
-            } catch (ConnectionError e) {
+                } else {
+                    Main.info("Connect MoonLite to port " + mockedPort);
+                    Main.info("Terminate to stop.");
+                }
+
+            } catch (ConnectionException e) {
                 connectionProp.setState(PropertyStates.ALERT);
                 if (serialPort != null) {
                     try {
@@ -263,7 +270,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                         serialPort.disconnect();
                         serialPort = null;
 
-                    } catch (ConnectionError de) {
+                    } catch (ConnectionException de) {
                         Main.err(de.getMessage(), de, false);
                     }
                 }
@@ -379,7 +386,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                                 connectElem.setValue(Constants.SwitchStatus.OFF);
                                 connectionProp.setState(PropertyStates.OK);
 
-                            } catch (ConnectionError e) {
+                            } catch (ConnectionException e) {
                                 Main.err(e.getMessage(), e, false);
                                 connectionProp.setState(PropertyStates.ALERT);
                             }

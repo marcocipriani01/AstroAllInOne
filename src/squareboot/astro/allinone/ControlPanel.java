@@ -1,5 +1,9 @@
 package squareboot.astro.allinone;
 
+import com.jcraft.jsch.UserInfo;
+import squareboot.astro.allinone.io.ConnectionException;
+import squareboot.astro.allinone.io.ScpUploader;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -111,13 +115,22 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         saveButton.addActionListener(e -> savePinConfig());
         sendConfigButton.addActionListener(e -> {
             Settings settings = savePinConfig();
-            //settings.getFile();
-            //TODO send config
+            if (settings != null) {
+                String host = JOptionPane.showInputDialog(this, "Remote SSH server IP/address:", "SCP", JOptionPane.QUESTION_MESSAGE),
+                        user = JOptionPane.showInputDialog(this, "Remote username:", "SCP", JOptionPane.QUESTION_MESSAGE);
+                try {
+                    ScpUploader.send(settings.getFile(), user, host, "/home/" + user + "/.config/AstroAllInOne/Settings.json", new UserInfoProvider(this));
+                    Main.info("Settings uploaded to remote host!", this);
+
+                } catch (ConnectionException ex) {
+                    Main.err(ex.getMessage(), ex, this);
+                }
+            }
         });
         runServerButton.addActionListener(e -> {
             int indiPort = (int) indiPortField.getValue();
             if (indiPort < 50) {
-                Main.err("Invalid INDI port!", true);
+                Main.err("Invalid INDI port!", this);
 
             } else {
                 Settings settings = Main.getSettings();
@@ -199,12 +212,12 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         Settings settings = Main.getSettings();
         try {
             if (!PinArray.checkPins(settings.getDigitalPins().toArray(), settings.getPwmPins().toArray())) {
-                Main.err("Duplicated pins found, please fix this in order to continue.", true);
+                Main.err("Duplicated pins found, please fix this in order to continue.", this);
                 return null;
             }
 
         } catch (IndexOutOfBoundsException e) {
-            Main.err(e.getMessage(), e, true);
+            Main.err(e.getMessage(), e, this);
             return null;
         }
         try {
@@ -288,14 +301,14 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
                 }
                 pin = Integer.valueOf(input);
                 if ((pin < 2) || (pin > 99)) {
-                    Main.err("Invalid pin: " + pin + "\" is outside the allowed bounds (2 ≤ pin ≤ 99)!", true);
+                    Main.err("Invalid pin: " + pin + "\" is outside the allowed bounds (2 ≤ pin ≤ 99)!", this);
 
                 } else {
                     check = false;
                 }
 
             } catch (NumberFormatException e) {
-                Main.err("Invalid pin! Must be a number.", true);
+                Main.err("Invalid pin! Must be a number.", this);
             }
         } while (check);
         return new ArduinoPin(pin, "Pin " + pin);
@@ -373,6 +386,68 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
          */
         public ArduinoPin getArduinoPin() {
             return pin;
+        }
+    }
+
+    /**
+     * User info provider.
+     *
+     * @author SquareBoot
+     * @author JCraft
+     * @version 1.0
+     * @see UserInfo
+     */
+    public static class UserInfoProvider implements UserInfo {
+
+        String password;
+        private JFrame parentWindow;
+
+        /**
+         * Class constructor.
+         *
+         * @param parentWindow parent window for dialogs.
+         */
+        public UserInfoProvider(JFrame parentWindow) {
+            this.parentWindow = parentWindow;
+        }
+
+        @Override
+        public String getPassword() {
+            return password;
+        }
+
+        @Override
+        public boolean promptYesNo(String str) {
+            return JOptionPane.showConfirmDialog(parentWindow, str, "SCP",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
+        }
+
+        @Override
+        public String getPassphrase() {
+            return null;
+        }
+
+        @Override
+        public boolean promptPassphrase(String message) {
+            return true;
+        }
+
+        @Override
+        public boolean promptPassword(String message) {
+            JTextField passwordField = new JPasswordField(20);
+            if (JOptionPane.showConfirmDialog(parentWindow, new Object[]{passwordField},
+                    message, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
+                password = passwordField.getText();
+                return true;
+
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public void showMessage(String message) {
+            JOptionPane.showMessageDialog(parentWindow, message, "SCP", JOptionPane.INFORMATION_MESSAGE);
         }
     }
 }

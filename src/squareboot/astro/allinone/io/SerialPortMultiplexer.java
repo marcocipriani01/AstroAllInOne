@@ -44,7 +44,7 @@ public class SerialPortMultiplexer {
             while (socat.isNotReady()) {
                 Thread.sleep(50);
                 if (System.currentTimeMillis() - startTime >= 1000) {
-                    throw new ConnectionError("Unable to start socat!", ConnectionError.Type.TIMEOUT);
+                    throw new ConnectionException("Unable to start socat!", ConnectionException.Type.TIMEOUT);
                 }
             }
 
