@@ -4,7 +4,8 @@ import laazotea.indi.INDIException;
 import laazotea.indi.driver.INDIDriver;
 import laazotea.indi.server.DefaultINDIServer;
 import laazotea.indi.server.INDIClient;
-import squareboot.astro.allinone.io.ConnectionError;
+import squareboot.astro.allinone.Main;
+import squareboot.astro.allinone.io.ConnectionException;
 
 import java.net.Socket;
 import java.util.Arrays;
@@ -49,7 +50,7 @@ public class INDIServer extends DefaultINDIServer {
             loadJavaDriversFromJAR(jar);
 
         } catch (INDIException e) {
-            throw new ConnectionError("Error during driver loading!", ConnectionError.Type.IO);
+            throw new ConnectionException("Error during driver loading!", ConnectionException.Type.IO);
         }
     }
 
@@ -95,7 +96,7 @@ public class INDIServer extends DefaultINDIServer {
             loadJavaDriver(driver);
 
         } catch (INDIException e) {
-            throw new ConnectionError("Error during driver loading!", ConnectionError.Type.IO);
+            throw new ConnectionException("Error during driver loading!", ConnectionException.Type.IO);
         }
     }
 
@@ -120,7 +121,7 @@ public class INDIServer extends DefaultINDIServer {
             loadNativeDriver(path);
 
         } catch (INDIException e) {
-            throw new ConnectionError("Error during driver loading!", ConnectionError.Type.IO);
+            throw new ConnectionException("Error during driver loading!", ConnectionException.Type.IO);
         }
     }
 
@@ -162,7 +163,7 @@ public class INDIServer extends DefaultINDIServer {
     @Override
     public void startListeningToClients() {
         if (isServerRunning()) {
-            throw new ConnectionError("Server already started!", ConnectionError.Type.ALREADY_STARTED);
+            throw new ConnectionException("Server already started!", ConnectionException.Type.ALREADY_STARTED);
 
         } else {
             super.startListeningToClients();
@@ -170,9 +171,9 @@ public class INDIServer extends DefaultINDIServer {
     }
 
     /**
-     * Gets if the server is listening for new Clients to connect.
+     * Gets if the server is listening for new clients to connect.
      *
-     * @return <code>true</code> if the server is listening for new Clients. <code>false</code> otherwise.
+     * @return {@code true} if the server is listening for new clients.
      */
     @Override
     public boolean isServerRunning() {
@@ -180,8 +181,8 @@ public class INDIServer extends DefaultINDIServer {
     }
 
     /**
-     * Stops the server from listening new clients. All connections with existing
-     * clients are also broken.
+     * Stops the server from listening new clients.
+     * All connections with existing clients are also broken.
      */
     @Override
     public void stopServer() {
@@ -189,7 +190,7 @@ public class INDIServer extends DefaultINDIServer {
             super.stopServer();
 
         } else {
-            throw new ConnectionError("Server not started!", ConnectionError.Type.NOT_STARTED);
+            throw new ConnectionException("Server not started!", ConnectionException.Type.NOT_STARTED);
         }
     }
 
@@ -205,7 +206,7 @@ public class INDIServer extends DefaultINDIServer {
             loadNetworkDriver(host, port);
 
         } catch (INDIException e) {
-            throw new ConnectionError("Unable to connect to remove server!", e, ConnectionError.Type.CONNECTION);
+            throw new ConnectionException("Unable to connect to remove server!", e, ConnectionException.Type.CONNECTION);
         }
     }
 
@@ -227,17 +228,7 @@ public class INDIServer extends DefaultINDIServer {
      */
     @Override
     protected void connectionWithClientBroken(INDIClient client) {
-        printMessage("Connection with client " + client.getInetAddress() + " has been broken.");
-    }
-
-    /**
-     * Write message to the INDI console (System.err)
-     *
-     * @param message The message to be printed.
-     */
-    public void printMessage(String message) {
-        System.err.println(message);
-        System.err.flush();
+        Main.err("Connection with client " + client.getInetAddress() + " has been broken.");
     }
 
     /**
@@ -247,7 +238,7 @@ public class INDIServer extends DefaultINDIServer {
      */
     @Override
     protected void connectionWithClientEstablished(INDIClient client) {
-        printMessage("Connection with client " + client.getInetAddress() + " established.");
+        Main.err("Connection with client " + client.getInetAddress() + " established.");
     }
 
     /**
@@ -258,7 +249,7 @@ public class INDIServer extends DefaultINDIServer {
      */
     @Override
     protected void driverDisconnected(String driverIdentifier, String[] deviceNames) {
-        printMessage("Driver " + driverIdentifier + " has been disconnected. " +
+        Main.err("Driver " + driverIdentifier + " has been disconnected. " +
                 "The following devices have disappeared: " + Arrays.toString(deviceNames)
                 .replace("[", "").replace("]", ""));
     }

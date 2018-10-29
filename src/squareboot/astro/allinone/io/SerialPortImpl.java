@@ -7,16 +7,16 @@ import java.util.ArrayList;
 /**
  * Abstract manager for serial ports with listeners.
  * Provides a simple way to connect your board, to send and to receive data and to get a list containing all the available ports.
- * For each error, this class will use the {@link ConnectionError} class to give you a better explanation of the error
- * (see {@link ConnectionError#getType()}, {@link ConnectionError#getCause()} and {@link ConnectionError#getMessage()}).
+ * For each error, this class will use the {@link ConnectionException} class to give you a better explanation of the error
+ * (see {@link ConnectionException#getType()}, {@link ConnectionException#getCause()} and {@link ConnectionException#getMessage()}).
  *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.1
  * @see <a href="https://github.com/scream3r/java-simple-serial-connector">jSSC on GitHub</a>
  * @see <a href="https://code.google.com/archive/p/java-simple-serial-connector/wikis/jSSC_examples.wiki">jSSC examples - Google Code Archive</a>
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public abstract class GenericSerialPort implements SerialPortEventListener {
+public class SerialPortImpl implements SerialPortEventListener {
 
     /**
      * List of all the listeners.
@@ -30,7 +30,7 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
     /**
      * Class constructor.
      */
-    public GenericSerialPort() {
+    public SerialPortImpl() {
 
     }
 
@@ -39,7 +39,7 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
      *
      * @param port the port of your board.
      */
-    public GenericSerialPort(String port) {
+    public SerialPortImpl(String port) {
         connect(port);
     }
 
@@ -49,7 +49,7 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
      * @param port the port of your board.
      * @param rate the baud rate.
      */
-    public GenericSerialPort(String port, int rate) {
+    public SerialPortImpl(String port, int rate) {
         connect(port, rate);
     }
 
@@ -58,7 +58,7 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
      *
      * @return an array containing all the available and not busy ports.
      */
-    public static String[] listAvailablePorts() {
+    public static String[] scanSerialPorts() {
         return SerialPortList.getPortNames();
     }
 
@@ -95,8 +95,9 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
     /**
      * @return a mask for this serial port.
      */
-    @SuppressWarnings("SameReturnValue")
-    protected abstract int getMask();
+    protected int getMask() {
+        return SerialPort.MASK_RXCHAR;
+    }
 
     /**
      * Connects an board to this object.
@@ -113,29 +114,24 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
             serialPort.addEventListener(this);
 
         } catch (SerialPortException e) {
-            ConnectionError.Type type;
+            ConnectionException.Type type;
             switch (e.getExceptionType()) {
-                case SerialPortException.TYPE_PORT_BUSY: {
-                    type = ConnectionError.Type.PORT_BUSY;
-                    break;
-                }
-
+                case SerialPortException.TYPE_PORT_BUSY:
                 case SerialPortException.TYPE_PORT_ALREADY_OPENED: {
-                    type = ConnectionError.Type.PORT_BUSY;
+                    type = ConnectionException.Type.PORT_BUSY;
                     break;
                 }
-
 
                 case SerialPortException.TYPE_PORT_NOT_FOUND: {
-                    type = ConnectionError.Type.PORT_NOT_FOUND;
+                    type = ConnectionException.Type.PORT_NOT_FOUND;
                     break;
                 }
 
                 default: {
-                    type = ConnectionError.Type.UNKNOWN;
+                    type = ConnectionException.Type.UNKNOWN;
                 }
             }
-            throw new ConnectionError("An error occurred during connection!", e, type);
+            throw new ConnectionException("An error occurred during connection!", e, type);
         }
     }
 
@@ -156,12 +152,12 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
     public void disconnect() {
         try {
             if (!serialPort.closePort()) {
-                throw new ConnectionError("Something went wrong during the disconnection!", ConnectionError.Type.UNABLE_TO_DISCONNECT);
+                throw new ConnectionException("Something went wrong during the disconnection!", ConnectionException.Type.UNABLE_TO_DISCONNECT);
             }
             listeners.clear();
 
         } catch (SerialPortException e) {
-            throw new ConnectionError("Something went wrong during the disconnection!", e, ConnectionError.Type.UNABLE_TO_DISCONNECT);
+            throw new ConnectionException("Something went wrong during the disconnection!", e, ConnectionException.Type.UNABLE_TO_DISCONNECT);
         }
     }
 
@@ -172,7 +168,7 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
      */
     protected void notifyError(Exception e) {
         for (SerialMessageListener l : listeners) {
-            l.onConnectionError(e);
+            l.onPortError(e);
         }
     }
 
@@ -186,33 +182,33 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
             new Thread(() -> {
                 try {
                     if (!serialPort.writeBytes(message.getBytes())) {
-                        notifyError(new ConnectionError("An error occurred while sending the message!",
-                                ConnectionError.Type.OUTPUT));
+                        notifyError(new ConnectionException("An error occurred while sending the message!",
+                                ConnectionException.Type.OUTPUT));
                     }
 
                 } catch (SerialPortException e) {
-                    ConnectionError.Type type;
+                    ConnectionException.Type type;
                     switch (e.getExceptionType()) {
                         case SerialPortException.TYPE_PORT_BUSY: {
-                            type = ConnectionError.Type.BUSY;
+                            type = ConnectionException.Type.BUSY;
                             break;
                         }
 
                         case SerialPortException.TYPE_PORT_NOT_OPENED: {
-                            type = ConnectionError.Type.NOT_CONNECTED;
+                            type = ConnectionException.Type.NOT_CONNECTED;
                             break;
                         }
 
                         default: {
-                            type = ConnectionError.Type.UNKNOWN;
+                            type = ConnectionException.Type.UNKNOWN;
                         }
                     }
-                    notifyError(new ConnectionError("An error occurred during data transfer!", e, type));
+                    notifyError(new ConnectionException("An error occurred during data transfer!", e, type));
                 }
             }, "Serial data sender").start();
 
         } else {
-            throw new ConnectionError(ConnectionError.Type.NOT_CONNECTED);
+            throw new ConnectionException(ConnectionException.Type.NOT_CONNECTED);
         }
     }
 
@@ -302,27 +298,26 @@ public abstract class GenericSerialPort implements SerialPortEventListener {
      * @param portEvent the port event.
      */
     @Override
-    public abstract void serialEvent(SerialPortEvent portEvent);
+    public void serialEvent(SerialPortEvent portEvent) {
+        try {
+            notifyListener(serialPort.readString());
+
+        } catch (SerialPortException e) {
+            notifyError(new ConnectionException("An error occurred while receiving data from the serial port!",
+                    e, ConnectionException.Type.INPUT));
+        }
+    }
 
     /**
-     * Sends a message to all the stored serial message listeners.
+     * Sends a message to all the registered serial message listeners.
      *
      * @param msg the message.
      */
     protected void notifyListener(String msg) {
         if ((msg != null) && (!msg.equals(""))) {
-            notifyListener0(msg);
-        }
-    }
-
-    /**
-     * Sends a message to all the stored serial message listeners.
-     *
-     * @param msg the message.
-     */
-    protected void notifyListener0(String msg) {
-        for (SerialMessageListener l : listeners) {
-            l.onMessage(msg);
+            for (SerialMessageListener l : listeners) {
+                l.onPortMessage(msg);
+            }
         }
     }
 }

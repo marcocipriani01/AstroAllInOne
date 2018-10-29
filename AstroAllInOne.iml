@@ -7,10 +7,10 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="JShell" level="project" />
     <orderEntry type="module" module-name="I4J" />
     <orderEntry type="library" name="commons-cli" level="project" />
     <orderEntry type="library" name="Gson" level="project" />
     <orderEntry type="library" name="jSSC" level="project" />
+    <orderEntry type="library" name="JSch" level="project" />
   </component>
 </module>

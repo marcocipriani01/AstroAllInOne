@@ -1,20 +1,30 @@
 package squareboot.astro.allinone;
 
-import squareboot.astro.allinone.io.GenericSerialPort;
+import com.jcraft.jsch.UserInfo;
+import squareboot.astro.allinone.io.ConnectionException;
+import squareboot.astro.allinone.io.ScpUploader;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.awt.*;
 import java.awt.event.*;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.io.UncheckedIOException;
 
 /**
  * The control panel.
  *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.0
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public abstract class ControlPanel extends JFrame implements ActionListener {
+
+    /**
+     * Application icon (for swing).
+     */
+    public static Image APP_LOGO = Toolkit.getDefaultToolkit().getImage(ControlPanel.class.
+            getResource("/squareboot/astro/allinone/logo.png"));
 
     /**
      * The parent component.
@@ -28,18 +38,6 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      * The list of PWM pins.
      */
     private JList<ArduinoPin> pwmPinsList;
-    /**
-     * Save button.
-     */
-    private JButton okButton;
-    /**
-     * Cancel button.
-     */
-    private JButton cancelButton;
-    /**
-     * ComboBox containing the list of available serial ports.
-     */
-    private JComboBox<String> portsComboBox;
     /**
      * Field for the INDI server's port.
      */
@@ -69,9 +67,18 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      */
     private JButton editPwmPinButton;
     /**
-     * Timer to refresh the list of available serial ports.
+     * Button to save the pin config.
      */
-    private Timer refresher = new Timer("Serial ports refresher");
+    private JButton saveButton;
+    /**
+     * Button to run the stand-alone INDI server.
+     */
+    private JButton runServerButton;
+    /**
+     * Button to send the pin config to another computer.
+     */
+    private JButton sendConfigButton;
+
     /**
      * Model for the list of digital pins.
      */
@@ -86,57 +93,47 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      */
     public ControlPanel() {
         super(Main.APP_NAME + " control panel");
-        setIconImage(Main.logo);
+        setIconImage(APP_LOGO);
         setContentPane(parent);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new WindowAdapter() {
             @Override
-            public void windowClosing(WindowEvent windowEvent) {
-                onCancel();
-            }
-        });
+            public void windowClosing(WindowEvent e) {
+                super.windowClosing(e);
+                int operation = JOptionPane.showConfirmDialog(null, "Save and exit, exit or cancel?", Main.APP_NAME,
+                        JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
+                if (operation == JOptionPane.YES_OPTION) {
+                    saveConfig();
+                    Main.exit(Main.ExitCodes.OK);
 
-        for (String p : GenericSerialPort.listAvailablePorts()) {
-            portsComboBox.addItem(p);
-        }
-        refresher.scheduleAtFixedRate(new TimerTask() {
-            @Override
-            public void run() {
-                boolean popupVisible = portsComboBox.isPopupVisible();
-                String selectedItem = (String) portsComboBox.getSelectedItem();
-                portsComboBox.removeAllItems();
-                for (String p : GenericSerialPort.listAvailablePorts()) {
-                    portsComboBox.addItem(p);
+                } else if (operation == JOptionPane.NO_OPTION) {
+                    Main.exit(Main.ExitCodes.OK);
                 }
-                if (popupVisible) {
-                    SwingUtilities.invokeLater(() -> portsComboBox.showPopup());
+            }
+        });
+
+        saveButton.addActionListener(e -> saveConfig());
+        sendConfigButton.addActionListener(e -> {
+            Settings settings = saveConfig();
+            if (settings != null) {
+                String host = JOptionPane.showInputDialog(this, "Remote SSH server IP/address:", "SCP", JOptionPane.QUESTION_MESSAGE),
+                        user = JOptionPane.showInputDialog(this, "Remote username:", "SCP", JOptionPane.QUESTION_MESSAGE);
+                try {
+                    ScpUploader.send(settings.getFile(), user, host, "/home/" + user + "/.config/AstroAllInOne/Settings.json", new UserInfoProvider(this));
+                    Main.info("Settings uploaded to remote host!", this);
+
+                } catch (ConnectionException ex) {
+                    Main.err(ex.getMessage(), ex, this);
                 }
-                portsComboBox.setSelectedItem(selectedItem);
             }
-        }, 2500, 2500);
-
-        cancelButton.addActionListener(e -> {
-            dispose();
-            onCancel();
         });
-        okButton.addActionListener(e -> {
-            String serialPort = (String) portsComboBox.getSelectedItem();
-            int indiPort = (int) indiPortField.getValue();
-            if (indiPort < 50 || serialPort == null || serialPort.equals("")) {
-                JOptionPane.showMessageDialog(this, "Invalid input!", Main.APP_NAME,
-                        JOptionPane.ERROR_MESSAGE);
-                return;
+        runServerButton.addActionListener(e -> {
+            Settings settings = saveConfig();
+            if (settings != null) {
+                onRunServer(settings.getIndiPort());
+                dispose();
             }
-            System.out.println("Saving user input...");
-            Settings settings = Main.getSettings();
-            settings.setUsbPort(serialPort);
-            settings.setIndiPort(indiPort);
-            settings.save();
-            dispose();
-            onOk();
         });
-
-        portsComboBox.setSelectedItem(Main.getSettings().getUsbPort());
 
         addDigitalPinButton.addActionListener(this);
         removeDigitalPinButton.addActionListener(this);
@@ -161,16 +158,13 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             }
         });
 
-        setBounds(200, 150, 650, 550);
+        setBounds(200, 150, 600, 500);
         setVisible(true);
     }
 
-    @Override
-    public void dispose() {
-        super.dispose();
-        refresher.cancel();
-    }
-
+    /**
+     * Sets up the user interface.
+     */
     private void createUIComponents() {
         Settings settings = Main.getSettings();
         indiPortField = new JSpinner(new SpinnerNumberModel(settings.getIndiPort(), 10, 99999, 1));
@@ -202,6 +196,45 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         });
     }
 
+    /**
+     * Saves all the configuration to the settings.
+     *
+     * @return the used {@link Settings} object. May be null if the saving failed.
+     */
+    private Settings saveConfig() {
+        Main.err("Saving settings...");
+        Settings settings = Main.getSettings();
+        int indiPort = (int) indiPortField.getValue();
+        if (indiPort < 50) {
+            Main.err("Invalid INDI port!", this);
+            return null;
+
+        } else {
+            settings.setIndiPort(indiPort);
+        }
+        try {
+            if (!PinArray.checkPins(settings.getDigitalPins().toArray(), settings.getPwmPins().toArray())) {
+                Main.err("Duplicated pins found, please fix this in order to continue.", this);
+                return null;
+            }
+
+        } catch (IndexOutOfBoundsException e) {
+            Main.err(e.getMessage(), e, this);
+            return null;
+        }
+        try {
+            settings.save();
+
+        } catch (UncheckedIOException e) {
+            e.printStackTrace();
+            return null;
+        }
+        return settings;
+    }
+
+    /**
+     * Add/remove/edit digital and PWM pins button actions.
+     */
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
@@ -238,24 +271,30 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
         }
     }
 
+    /**
+     * Shows a dialog to edit the selected PWM pin.
+     */
     private void editPwmPin() {
         new PwmPinDialog(this, pwmPinsList.getSelectedValue());
         pwmPinsList.repaint();
     }
 
+    /**
+     * Shows a dialog to edit the selected digital pin.
+     */
     private void editDigitalPin() {
         new DigitalPinDialog(this, digitalPinsList.getSelectedValue());
         digitalPinsList.repaint();
     }
 
     /**
-     * Shows a dialog to user asking for a pin.
+     * Shows a dialog to the user asking for a new pin's number.
      *
-     * @return an {@link ArduinoPin} object with the chosen pin.
+     * @return an {@link ArduinoPin} object representing the given pin, or {@code null}.
      */
     private ArduinoPin askNewPin() {
-        boolean check;
-        int value = 13;
+        boolean check = true;
+        int pin = -1;
         do {
             try {
                 String input = JOptionPane.showInputDialog(this, "New pin",
@@ -263,25 +302,155 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
                 if (input == null) {
                     return null;
                 }
-                value = Integer.valueOf(input);
-                check = false;
+                pin = Integer.valueOf(input);
+                if ((pin < 2) || (pin > 99)) {
+                    Main.err("Invalid pin: " + pin + "\" is outside the allowed bounds (2 ≤ pin ≤ 99)!", this);
+
+                } else {
+                    check = false;
+                }
 
             } catch (NumberFormatException e) {
-                JOptionPane.showMessageDialog(this, "Invalid pin! Must be a number.",
-                        Main.APP_NAME, JOptionPane.ERROR_MESSAGE);
-                check = true;
+                Main.err("Invalid pin! Must be a number.", this);
             }
         } while (check);
-        return new ArduinoPin(value, "A pin");
+        return new ArduinoPin(pin, "Pin " + pin);
     }
 
     /**
-     * Called when the user clicks "OK".
+     * Invoked when the user wants to run the server.
+     *
+     * @param port the port of the server.
      */
-    protected abstract void onOk();
+    protected abstract void onRunServer(int port);
 
     /**
-     * Called when the user clicks "Cancel".
+     * Abstract {@link JDialog} to ask the user for a pin, its name and its value.
+     *
+     * @author SquareBoot
+     * @version 1.0
+     * @see DigitalPinDialog
+     * @see PwmPinDialog
      */
-    protected abstract void onCancel();
+    public abstract static class AbstractPinDialog extends JDialog {
+
+        /**
+         * An Arduino pin.
+         */
+        protected ArduinoPin pin;
+
+        /**
+         * Class constructor.
+         *
+         * @param pin a pin.
+         */
+        public AbstractPinDialog(JFrame frame, ArduinoPin pin) {
+            super(frame, "Pin editor", ModalityType.DOCUMENT_MODAL);
+            setIconImage(APP_LOGO);
+            this.pin = pin;
+        }
+
+        protected void setUpPinFields(JSpinner pinSpinner, JTextField nameTextField) {
+            pinSpinner.addChangeListener(e -> this.pin.setPin((int) pinSpinner.getValue()));
+            pinSpinner.setValue(pin.getPin());
+
+            nameTextField.getDocument().addDocumentListener(new DocumentListener() {
+                @Override
+                public void changedUpdate(DocumentEvent e) {
+                    updateName();
+                }
+
+                @Override
+                public void removeUpdate(DocumentEvent e) {
+                    updateName();
+                }
+
+                @Override
+                public void insertUpdate(DocumentEvent e) {
+                    updateName();
+                }
+
+                public void updateName() {
+                    AbstractPinDialog.this.pin.setName(nameTextField.getText());
+                }
+            });
+            nameTextField.addActionListener(e -> dispose());
+            nameTextField.setText(pin.getName());
+        }
+
+        protected void showUp() {
+            setLocation(250, 250);
+            pack();
+            setVisible(true);
+        }
+
+        /**
+         * @return the stored pin.
+         */
+        public ArduinoPin getArduinoPin() {
+            return pin;
+        }
+    }
+
+    /**
+     * User info provider.
+     *
+     * @author SquareBoot
+     * @author JCraft
+     * @version 1.0
+     * @see UserInfo
+     */
+    public static class UserInfoProvider implements UserInfo {
+
+        String password;
+        private JFrame parentWindow;
+
+        /**
+         * Class constructor.
+         *
+         * @param parentWindow parent window for dialogs.
+         */
+        public UserInfoProvider(JFrame parentWindow) {
+            this.parentWindow = parentWindow;
+        }
+
+        @Override
+        public String getPassword() {
+            return password;
+        }
+
+        @Override
+        public boolean promptYesNo(String str) {
+            return JOptionPane.showConfirmDialog(parentWindow, str, "SCP",
+                    JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.YES_OPTION;
+        }
+
+        @Override
+        public String getPassphrase() {
+            return null;
+        }
+
+        @Override
+        public boolean promptPassphrase(String message) {
+            return true;
+        }
+
+        @Override
+        public boolean promptPassword(String message) {
+            JTextField passwordField = new JPasswordField(20);
+            if (JOptionPane.showConfirmDialog(parentWindow, new Object[]{passwordField},
+                    message, JOptionPane.OK_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE) == JOptionPane.OK_OPTION) {
+                password = passwordField.getText();
+                return true;
+
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public void showMessage(String message) {
+            JOptionPane.showMessageDialog(parentWindow, message, "SCP", JOptionPane.INFORMATION_MESSAGE);
+        }
+    }
 }

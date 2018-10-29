@@ -11,7 +11,7 @@ import java.io.*;
  * Stores all the app's settings.
  *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.0
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class Settings {
@@ -22,15 +22,27 @@ public class Settings {
     public static final Gson serializer = new GsonBuilder()
             .setPrettyPrinting().serializeNulls().excludeFieldsWithoutExposeAnnotation().create();
 
+    /**
+     * Last used serial port.
+     * */
     @SerializedName("USB port")
     @Expose
     private String usbPort = "";
+    /**
+     * INDI server port.
+     * */
     @SerializedName("INDI server port")
     @Expose
     private int indiPort = 7625;
+    /**
+     * List of digital pins.
+     * */
     @SerializedName("Digital pins")
     @Expose
     private PinArray digitalPins = new PinArray();
+    /**
+     * List of PWM pins.
+     * */
     @SerializedName("PWM pins")
     @Expose
     private PinArray pwmPins = new PinArray();

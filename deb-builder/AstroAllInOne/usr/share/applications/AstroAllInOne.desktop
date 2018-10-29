@@ -1,8 +1,8 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=AstroAllInOne
-Comment=AstroAllInOne by SquareBoot
-Exec=/usr/bin/astroallinone
+Name=AstroAllInOne Control Panel
+Comment=AstroAllInOne Control Panel GUI
+Exec=/usr/bin/astroallinone -c
 Icon=/usr/share/AstroAllInOne/logo.png
 Terminal=false
 Type=Application

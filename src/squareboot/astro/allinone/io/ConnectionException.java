@@ -4,10 +4,10 @@ package squareboot.astro.allinone.io;
  * Exception related to connections, sockets, communication and data transfer in general.
  *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.0
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
-public class ConnectionError extends RuntimeException {
+public class ConnectionException extends RuntimeException {
 
     /**
      * The kind of the error occurred.
@@ -17,7 +17,7 @@ public class ConnectionError extends RuntimeException {
     /**
      * Constructs a new exception with {@code null} as its detail message.
      */
-    public ConnectionError() {
+    public ConnectionException() {
         super();
     }
 
@@ -27,7 +27,7 @@ public class ConnectionError extends RuntimeException {
      * @param message the detail message. The detail message is saved for
      *                later retrieval by the {@link #getMessage()} method.
      */
-    public ConnectionError(String message) {
+    public ConnectionException(String message) {
         super(message);
     }
 
@@ -42,7 +42,7 @@ public class ConnectionError extends RuntimeException {
      *                permitted, and indicates that the cause is nonexistent or
      *                unknown.)
      */
-    public ConnectionError(String message, Throwable cause) {
+    public ConnectionException(String message, Throwable cause) {
         super(message, cause);
     }
 
@@ -54,7 +54,7 @@ public class ConnectionError extends RuntimeException {
      * @param type the type of error detected.
      * @see Type
      */
-    public ConnectionError(Type type) {
+    public ConnectionException(Type type) {
         super();
         this.type = type;
     }
@@ -67,7 +67,7 @@ public class ConnectionError extends RuntimeException {
      * @param type    the type of error detected.
      * @see Type
      */
-    public ConnectionError(String message, Type type) {
+    public ConnectionException(String message, Type type) {
         super(message);
         this.type = type;
     }
@@ -85,7 +85,7 @@ public class ConnectionError extends RuntimeException {
      * @param type    the type of error detected.
      * @see Type
      */
-    public ConnectionError(String message, Throwable cause, Type type) {
+    public ConnectionException(String message, Throwable cause, Type type) {
         super(message, cause);
         this.type = type;
     }
@@ -102,7 +102,7 @@ public class ConnectionError extends RuntimeException {
      * @param type  the type of error detected.
      * @see Type
      */
-    public ConnectionError(Throwable cause, Type type) {
+    public ConnectionException(Throwable cause, Type type) {
         super(cause);
         this.type = type;
     }
@@ -171,6 +171,10 @@ public class ConnectionError extends RuntimeException {
          */
         PORT_NOT_FOUND,
         /**
+         * Host not found.
+         */
+        HOST_NOT_FOUND,
+        /**
          * Error during disconnection.
          */
         UNABLE_TO_DISCONNECT,
@@ -186,6 +190,18 @@ public class ConnectionError extends RuntimeException {
         /**
          * Occurs when the network interfaces are unreachable.
          */
-        NETWORK_ERROR
+        NETWORK_ERROR,
+        /**
+         * Connection timeout.
+         */
+        TIMEOUT,
+        /**
+         * Remote file not found.
+         */
+        REMOTE_FILE_NOT_FOUND,
+        /**
+         * Operation cancelled by user.
+         */
+        CANCELLED_BY_USER
     }
 }

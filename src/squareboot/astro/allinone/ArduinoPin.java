@@ -7,18 +7,30 @@ import laazotea.indi.Constants;
 import java.util.Objects;
 
 /**
+ * Represents an Arduino pin, with an id (its number on the Arduino board), a name and a value.
+ *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.0
+ * @see PinValue
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class ArduinoPin {
 
+    /**
+     * The pin id (its number on the Arduino board).
+     */
     @Expose
     @SerializedName("Pin")
     private int pin = -1;
+    /**
+     * The pin name.
+     */
     @SerializedName("Name")
     @Expose
     private String name = "A pin";
+    /**
+     * The pin value.
+     */
     @SerializedName("Value")
     @Expose
     private PinValue value = new PinValue();
@@ -31,7 +43,10 @@ public class ArduinoPin {
     }
 
     /**
-     * Class constructor.
+     * Class constructor. Value = 0.
+     *
+     * @param pin  the id of this pin (its number on the Arduino board).
+     * @param name a name for this pin.
      */
     public ArduinoPin(int pin, String name) {
         this.pin = pin;
@@ -42,6 +57,11 @@ public class ArduinoPin {
 
     /**
      * Class constructor.
+     *
+     * @param pin   the id of this pin (its number on the Arduino board).
+     * @param name  a name for this pin.
+     * @param value an initial value.
+     * @see #setValue(PinValue.ValueType, Object)
      */
     public ArduinoPin(int pin, String name, PinValue value) {
         this(pin, name);
@@ -50,66 +70,99 @@ public class ArduinoPin {
 
     /**
      * Class constructor.
+     *
+     * @param pin      the id of this pin (its number on the Arduino board).
+     * @param name     a name for this pin.
+     * @param pwmValue an initial value. Integer, 0→255
+     * @see #setValue(int)
      */
-    public ArduinoPin(int pin, String name, int value) {
+    public ArduinoPin(int pin, String name, int pwmValue) {
         this(pin, name);
-        this.value = new PinValue(value);
+        this.value = new PinValue(pwmValue);
     }
 
+    /**
+     * @return Integer, 0→255
+     * @see PinValue.ValueType#PWM
+     */
     public int getValuePwm() {
         return value.getValuePwm();
     }
 
+    /**
+     * @return {@code true} or {@code false}
+     * @see PinValue.ValueType#BOOLEAN
+     */
     public boolean getValueBoolean() {
         return value.getValueBoolean();
     }
 
+    /**
+     * @return Integer, 0→100%
+     * @see PinValue.ValueType#PERCENTAGE
+     */
     public int getValuePercentage() {
         return value.getValuePercentage();
     }
 
+    /**
+     * @return {@link Constants.SwitchStatus#ON} or {@link Constants.SwitchStatus#OFF}
+     * @see PinValue.ValueType#INDI
+     */
     public Constants.SwitchStatus getValueIndi() {
         return value.getValueIndi();
     }
 
+    /**
+     * Sets a new value to this pin.
+     *
+     * @param type  the type of value.
+     * @param value the initial value.
+     * @see PinValue.ValueType
+     */
     public void setValue(PinValue.ValueType type, Object value) {
         this.value.setValue(type, value);
     }
 
-    public void setValue(int value) {
-        this.value.setValue(value);
-    }
-
     /**
-     * @return the stored value of the pin.
+     * Sets a new value to this pin.
+     *
+     * @param pwmValue a new value for this pin, 0→255.
      */
-    public PinValue getPinVal() {
-        return value;
+    public void setValue(int pwmValue) {
+        value.setValue(pwmValue);
     }
 
     /**
-     * @param value the new value.
-     */
-    public void setPinVal(PinValue value) {
-        this.value = Objects.requireNonNull(value);
-    }
-
-    /**
-     * @return the pin.
+     * @return the pin id.
      */
     public int getPin() {
         return pin;
     }
 
     /**
-     * @param pin a new pin.
+     * @param pin a new pin id.
      */
     public void setPin(int pin) {
         this.pin = pin;
     }
 
     /**
-     * @return the name of the pin.
+     * @return the stored value of the pin.
+     */
+    public PinValue getPinValueObj() {
+        return value;
+    }
+
+    /**
+     * @param value the new value.
+     */
+    public void setPinValueObj(PinValue value) {
+        this.value = Objects.requireNonNull(value);
+    }
+
+    /**
+     * @return the name of this pin.
      */
     public String getName() {
         return name;

@@ -1,10 +1,16 @@
 package squareboot.astro.allinone.io;
 
-import squareboot.astro.allinone.SocatRunner;
+import squareboot.astro.allinone.Main;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 
 /**
+ * Serial port multiplexer/duplicator using socat (via {@link SocatRunner})
+ *
  * @author SquareBoot
- * @version 0.1
+ * @version 1.1
  */
 @SuppressWarnings({"unused", "WeakerAccess"})
 public class SerialPortMultiplexer {
@@ -16,40 +22,39 @@ public class SerialPortMultiplexer {
     /**
      * The mocked serial port.
      */
-    private SimpleSerialPort mockedSerialPort;
+    private SerialPortImpl mockedSerialPort;
     private Forwarder mockedSerialPortListener;
     /**
      * The real serial port.
      */
-    private SimpleSerialPort realSerialPort;
+    private SerialPortImpl realSerialPort;
     private Forwarder realSerialPortLister;
 
     /**
      * Class constructor.
      *
-     * @param realSerialPort a real serial port.
+     * @param realSerialPort a real serial port to duplicate.
      */
-    public SerialPortMultiplexer(SimpleSerialPort realSerialPort) {
+    public SerialPortMultiplexer(SerialPortImpl realSerialPort) {
         socat = new SocatRunner();
-        Thread thread = new Thread(socat);
-        thread.start();
+        new Thread(socat).start();
         // Wait for process to start
         try {
             long startTime = System.currentTimeMillis();
-            while ((socat.isNotReady()) && (System.currentTimeMillis() - startTime < 1000)) {
+            while (socat.isNotReady()) {
                 Thread.sleep(50);
+                if (System.currentTimeMillis() - startTime >= 1000) {
+                    throw new ConnectionException("Unable to start socat!", ConnectionException.Type.TIMEOUT);
+                }
             }
 
-        } catch (InterruptedException ignored) {
-
+        } catch (InterruptedException e) {
+            if (Main.isVerboseMode()) {
+                e.printStackTrace();
+            }
         }
-        if (socat.isNotReady()) {
-            throw new IllegalStateException("Unable to start socat!");
-        }
-
-        mockedSerialPort = new SimpleSerialPort(socat.getPort1());
+        mockedSerialPort = new SerialPortImpl(socat.getPort1());
         this.realSerialPort = realSerialPort;
-
         mockedSerialPortListener = new Forwarder(this.realSerialPort);
         mockedSerialPort.addListener(mockedSerialPortListener);
         realSerialPortLister = new Forwarder(mockedSerialPort);
@@ -62,18 +67,8 @@ public class SerialPortMultiplexer {
     public void stop() {
         realSerialPort.removeListener(realSerialPortLister);
         mockedSerialPort.removeListener(mockedSerialPortListener);
-        try {
-            realSerialPort.disconnect();
-
-        } catch (ConnectionError e) {
-            e.printStackTrace();
-        }
-        try {
-            mockedSerialPort.disconnect();
-
-        } catch (ConnectionError e) {
-            e.printStackTrace();
-        }
+        realSerialPort.disconnect();
+        mockedSerialPort.disconnect();
         socat.stop();
     }
 
@@ -85,37 +80,137 @@ public class SerialPortMultiplexer {
     }
 
     /**
+     * Utility that starts socat to create two virtual raw PTYs (pseudoterminals) or virtual serial ports.
+     *
      * @author SquareBoot
-     * @version 0.1
+     * @version 1.0
+     */
+    @SuppressWarnings({"WeakerAccess", "unused"})
+    private static class SocatRunner implements Runnable {
+
+        /**
+         * The socat process.
+         */
+        private Process process;
+        /**
+         * Port 1.
+         */
+        private String port1;
+        /**
+         * Port 2.
+         */
+        private String port2;
+
+        @Override
+        public void run() {
+            try {
+                if (!System.getProperty("os.name").toLowerCase().equals("linux")) {
+                    UnsupportedOperationException e = new UnsupportedOperationException("Only Linux is supported by socat!");
+                    Main.err(e.getMessage());
+                    throw e;
+                }
+                ProcessBuilder processBuilder = new ProcessBuilder("socat",
+                        "-d", "-d", "pty,raw,echo=0", "pty,raw,echo=0");
+                processBuilder.redirectErrorStream(true);
+                process = processBuilder.start();
+                BufferedReader in = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                String line;
+                while ((line = in.readLine()) != null) {
+                    if (line.contains("] ")) {
+                        line = line.substring(line.indexOf("] ") + 2);
+                        Main.err("socat says: " + line);
+                        if (line.startsWith("N PTY is ")) {
+                            line = line.replace("N PTY is ", "");
+                            if (port1 == null) {
+                                port1 = line;
+
+                            } else if (port2 == null) {
+                                port2 = line;
+                                break;
+                            }
+                        }
+                    }
+                }
+                process.waitFor();
+                in.close();
+
+            } catch (SecurityException | UnsupportedOperationException | InterruptedException | IOException e) {
+                Main.err("Error occurred while launching socat: " + e.getMessage(), e, false);
+                Main.exit(Main.ExitCodes.SOCAT_ERROR);
+            }
+        }
+
+        /**
+         * @return {@code true} if both the ports have been initialized.
+         */
+        boolean isNotReady() {
+            return (port1 == null) || (port2 == null);
+        }
+
+        /**
+         * Stops the process.
+         */
+        void stop() {
+            process.destroy();
+            Main.err("socat stopped");
+        }
+
+        /**
+         * @return the socat process.
+         */
+        Process getProcess() {
+            return process;
+        }
+
+        /**
+         * @return the first port.
+         */
+        String getPort1() {
+            return port1;
+        }
+
+        /**
+         * @return the second port.
+         */
+        String getPort2() {
+            return port2;
+        }
+    }
+
+    /**
+     * Sends the messages that receives from the real serial port to the mocked one and vice-versa.
+     *
+     * @author SquareBoot
+     * @version 1.0
      */
     private class Forwarder implements SerialMessageListener {
 
-        private SimpleSerialPort forwardTo;
+        private SerialPortImpl forwardTo;
 
         /**
          * Class constructor.
          */
-        public Forwarder(SimpleSerialPort forwardTo) {
+        Forwarder(SerialPortImpl forwardTo) {
             this.forwardTo = forwardTo;
         }
 
         /**
-         * Called when a new message is received from the Arduino.
+         * Called when a new message is received from the serial port.
          *
          * @param msg the received message.
          */
         @Override
-        public void onMessage(String msg) {
+        public void onPortMessage(String msg) {
             forwardTo.print(msg);
         }
 
         /**
-         * Called when an error occurs.
+         * Called when an error occurred while communicating with the serial port.
          *
          * @param e the {@code Exception}.
          */
         @Override
-        public void onConnectionError(Exception e) {
+        public void onPortError(Exception e) {
             e.printStackTrace();
         }
     }
