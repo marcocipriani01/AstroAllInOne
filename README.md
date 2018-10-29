@@ -5,20 +5,9 @@ AstroAllInOne is an INDI driver that forwards commands from an
 Arduino to two INDI devices to control with just _one_ Arduino a 
 MoonLite focuser and a customizable list of digital and PWM pins.
 
-### Behind the scenes
-To work, AstroAllInOne uses `socat` and creates two virtual devices (sockets).
-Let's say, for example, that /dev/port1 and /dev/port2 are created:
-the first virtual port is used to read whatever is sent to the second one
-and the end user will be asked to connect the MoonLite driver to /dev/port2.
-AstroAllInOne will forward **every** byte sent to port2 to the real Arduino,
-plus command `:AVxxyyy#`, where `xx` is the pin nd `yyy` its new analog value,
-to change the state of a pin, and command `:RS#` to reset the board.
-
-## Starting AstroAllInOne using its GUI
-After starting AstroAllInOne a control panel will appear asking you to check
-the stored pin definitions. You'll be able to change the INDI server port
-(default 7625 to allow other INDI clients like KStars to use 7624),
-the serial port (the list is automatically updated) and
+## Using the control panel
+In the AstroAllInOne Control Panel you'll be able to select the port for the INDI server
+(default 7625 to allow other INDI clients like KStars to use 7624) and define
 the list of digital and PWM pins. You can click "Add" to add a pin definition:
 adding a digital pin means adding an INDI _switch element_
 (a checkbox in the INDI control panel in the client)
@@ -29,61 +18,69 @@ directly from the client INDI control panel.
 You'll be asked about the pin port (for example, pin 13). Then you can
 click "Edit" to modify the pin's properties: a custom name ("Dew heater")
 and a default value, applied when the driver starts.
+After defining all the pins, you can save and close the control panel to use the driver or the server
+from the command line (see below), or you can start the server directly from the control panel.
 
-### What's next?
-After having accepted all the settings (click "Continue") a small status window
-will appear: there you'll be able to copy the focuser port to the clipboard,
-restart the Arduino board (pay attention! **you may modify the focuser state
-unexpectedly**) or close the INDI driver & server. Click on "Copy focuser port"
-and paste the copied port in the MoonLite driver's port field (you'll
-need a INDI server and client for that, see below). You're done! Click "Connect"
-in the MoonLite driver and enjoy the focuser driver. To open the pin manager's
-INDI control panel connect an INDI client to the port you chose in the previous
-step. A "Control" tab will appear in the INDI client, allowing you to modify the pins
-values. To close the entire driver (MoonLite + pin manager) disconnect all the
-clients and click "Exit".
+## Starting the INDI driver
+The INDI driver can be run inside another INDI server executing `astroallinone -d`.
 
-### More boring and exhaustive instructions
+## Stand-alone CLI server
+Use `astroallinone -p=xxxx`, replacing `xxxx` with whatever port you want (or `0` to use the saved port),
+to start the server without GUI in the terminal.
+
+## Connecting and using the driver
 If you are new to the INDI protocol please read more in the
 <a href="http://indilib.org/about/discover-indi.html">INDI website</a> and in
-<a href="https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface">Wikipedia</a>.
-In order to use the pin manager driver you'll need an INDI server and a client.
-The server will host the MoonLite device, in whose control panel you'll have
-to paste the port, while the client must be connected to the chosen port
-to access the pin manager control panel. Here there's an example:
-open KStars, open Ekos from the toolbar and create a new profile containing
-your telescope mount, CCD camera or reflex and a MoonLite focuser. Uncheck
-the auto-connect box and give the profile a name. Start the INDI server
-and open the INDI control panel from Ekos. Connect each device using a different port
-and, in the MoonLite tab, paste the port in the "Port" field. Select baud speed to
-115200 and connect the MoonLite device. If everything is OK you'll get
-the full MoonLite control panel. Otherwise check if AstroAllInOne is running,
-if the virtual port exists and if the speed is 115200. Now close Ekos
-and go to Tools→Devices→Devices Manager→Client→Add. Write a name ("AstroAllInOne"),
-the AstroAllInOne server IP address (or localhost if on the same computer) and port,
-then click OK→Connect. The pin manager control panel will be added to the
-INDI control panel in Ekos, just like any other device started before from the
-Ekos profile. Enjoy!
+<a href="https://en.wikipedia.org/wiki/Instrument_Neutral_Distributed_Interface">Wikipedia</a>.<br>
+In order to use the pin manager driver you'll need an INDI client.
+In KStars, open Ekos from the toolbar and create a new profile containing
+your telescope mount, CCD camera or reflex and a MoonLite focuser, and in the "Remote:" driver field
+write `INDI Arduino pin driver@localhost:7625`. Be careful to replace `localhost:7625` with the
+right host and port. Uncheck the auto-connect box and give the profile a name.
+Now start the AstroAllInOne server (from the control panel or from the command line).
+Start the Ekos INDI server and open the INDI control panel. Connect your devices,
+go to the "INDI Arduino pin driver" tab and connect the driver. In the "Serial connection"
+tab select a serial port and hit connect. A new tab called "Manage pins" will show up,
+in which you can mange the PWM and digital pins you selected in the control panel.
+Copy the MoonLite port to the clipboard and paste it in the "Port" field in the MoonLite
+driver tab. Select baud speed to 115200 and connect the MoonLite device. If everything is OK you'll get
+the full MoonLite control panel. Otherwise check if AstroAllInOne server is running,
+if the virtual port exists and if the speed is 115200. Enjoy!
 
-## Starting from the command line (`bash`)
+### Sending configuration to another computer
+You can send the pin configuration and all the settings to another computer. Ensure AstroAllInOne is installed
+on both computer alongside with socat. The other computer must have a SSH server installed, while the sender
+a SSH client. From the sender computer, open the control panel and click on "Send configuration". You'll
+asked about the remote host, username and password. If the process fails due a missing remote folder,
+open and close one time the control panel in the remote computer and retry (this will create the required
+config folder in the remote user directory, which must be present in order to send the settings file).
 
-| Short option |  Long option  |               Param              |                          Description                          |
-|:------------:|:-------------:|:--------------------------------:|:-------------------------------------------------------------:|
-|      -g      |    --no-gtk   |                                  |          Forces the app to use the Java default L&F.          |
-|      -n      |    --no-gui   |                                  |             Do not show the control panel, no GUI.            |
-|      -p      |  --indi-port  |             e.g. 7624            |      Specifies a port for the INDI server (default 7625).     |
-|      -a      | --serial-port |        e.g. "/dev/ttACM0"        |                    Specifies a serial port.                   |
+### Starting from the command line (`bash`)
 
-For instance, run `astroallinone --no-gui --indi-port="7624" --serial-port="/dev/ttACM0"`
-to start AstroAllInOne without GUI, INDI server port 7624, Arduino serial port /dev/ttACM0
+| Short option | Long option     | Param             | Description                                                                                           |
+|:------------:|-----------------|-------------------|-------------------------------------------------------------------------------------------------------|
+| -a           | --serial-port   | e.g. /dev/ttyUSB0 | Specifies a serial port and connects to it if possible. Otherwise it will be stored to settings only. |
+| -c           | --control-panel |                   | Shows the control panel.                                                                              |
+| -d           | --driver        |                   | Driver-only mode (no server, stdin/stdout)                                                            |
+| -p           | --indi-port     | e.g. 7625         | Stand-alone server mode, CLI. If port=0, fetch the last used port from the settings.                  |
+| -v           | --verbose       |                   | Verbose mode.                                                                                         |
 
-## The Arduino MoonLite firmware
+### The Arduino MoonLite firmware
 Take a look at
 <a href="https://github.com/SquareBoot/Arduino-MoonLite-focuser">Arduino-MoonLite-focuser</a>
 to download the firmware, 3D mounting brackets, Eagle CAD circuit project and more!
 <br>**Note: standard MoonLite focusers do NOT support pin management! They won't work in AstroAllInOne properly, making this app useless!**
 
-## Contributions
+### Behind the scenes
+To work, AstroAllInOne uses `socat` and creates two virtual devices (sockets).
+Let's say, for example, that `/dev/port1` and `/dev/port2` are created:
+the first virtual port is used to read whatever is sent to the second one
+and the end user will be asked to connect the MoonLite driver to /dev/port2.
+AstroAllInOne will forward **every** byte sent to port2 to the real Arduino,
+plus command `:AVxxyyy#`, where `xx` is the pin nd `yyy` its new analog value,
+to change the state of a pin, and command `:RS#` to reset the board.
+
+### Contributions
 - SquareBoot
 
 Be the first to fork AstroAllInOne!
@@ -94,3 +91,4 @@ Be the first to fork AstroAllInOne!
 - <a href="http://indiforjava.sourceforge.net/stage/">INDI for Java</a> by Zerjillo
     - <a href="https://ostermiller.org/utils/">Ostermiller Java Utilities</a> by Stephen Ostermiller, <a href="https://ostermiller.org/utils/license.html">license</a>
 - <a href="https://github.com/scream3r/java-simple-serial-connector">jSSC</a> by scream3r, <a href="http://www.gnu.org/licenses/lgpl.html">license</a>
+- <a href="http://www.jcraft.com/jsch/">JSch</a> by JCraft, <a href="http://www.jcraft.com/jsch/LICENSE.txt">license</a>

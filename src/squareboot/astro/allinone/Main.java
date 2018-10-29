@@ -38,31 +38,36 @@ public class Main {
      * Do not show the control panel.
      */
     private static boolean showGUI = false;
+    /**
+     * Command line options for the parser.
+     */
+    private static Options cliOptions;
+
+    static {
+        cliOptions = new Options();
+        Option settingsOption = new Option("s", "settings", true,
+                "The directory where AstroAllInOne will save and retrieve its settings (normally, automatically set by the application runner).");
+        settingsOption.setRequired(true);
+        cliOptions.addOption(settingsOption);
+        cliOptions.addOption("c", "control-panel", false,
+                "Shows the control panel.");
+        cliOptions.addOption("d", "driver", false,
+                "Driver-only mode (no server, stdin/stdout)");
+        cliOptions.addOption("p", "indi-port", true,
+                "Stand-alone server mode, CLI. If port=0, fetch the last used port from the settings.");
+        cliOptions.addOption("a", "serial-port", true,
+                "Specifies a serial port and connects to it if possible. Otherwise it will be stored to settings only.");
+        cliOptions.addOption("v", "verbose", false, "Verbose mode.");
+    }
 
     /**
      * Main. Configures the L&F and starts the application.
      */
     public static void main(String[] args) {
         CommandLineParser parser = new DefaultParser();
-        Options options = new Options();
-        Option settingsOption = new Option("s", "settings", true,
-                "The directory where AstroAllInOne will save and retrieve its settings.");
-        settingsOption.setRequired(true);
-        options.addOption(settingsOption);
-        options.addOption("c", "control-panel", false,
-                "Shows the control panel.");
-        options.addOption("d", "driver", false,
-                "Driver-only mode (no server, stdin/stdout)");
-        options.addOption("p", "indi-port", true,
-                "Stand-alone server mode, CLI. If port=0, fetch the last used port from the settings.");
-        options.addOption("a", "serial-port", true,
-                "Specifies a serial port and connects to it if possible. Otherwise it will be stored to settings only.");
-        options.addOption("v", "verbose", false, "Verbose mode.");
-
         boolean autoConnectSerial = false;
-
         try {
-            CommandLine line = parser.parse(options, args);
+            CommandLine line = parser.parse(cliOptions, args);
 
             verboseMode = line.hasOption('v');
 
@@ -136,7 +141,7 @@ public class Main {
         } catch (ParseException e) {
             HelpFormatter formatter = new HelpFormatter();
             formatter.printHelp(new PrintWriter(System.err), HelpFormatter.DEFAULT_WIDTH, "astroallinone",
-                    "Help for AstroAllInOne:", options, HelpFormatter.DEFAULT_LEFT_PAD,
+                    "Help for AstroAllInOne:", cliOptions, HelpFormatter.DEFAULT_LEFT_PAD,
                     HelpFormatter.DEFAULT_DESC_PAD, "-d -c" +
                             "\n\nDistributed under the Apache License, Version 2.0, by SquareBoot");
             exit(ExitCodes.PARSING_ERROR);
@@ -179,8 +184,6 @@ public class Main {
         return server;
     }
 
-    // ----------- Exit management -----------
-
     /**
      * Closes the app.
      *
@@ -202,6 +205,11 @@ public class Main {
         String message = code.getMessage();
         if (message != null) {
             err(message, true);
+        }
+        if ((code == ExitCodes.INVALID_OPTIONS) || (code == ExitCodes.PARSING_ERROR)) {
+            new HelpFormatter().printHelp("astroallinone [-v] -c/-d/-p=xxxx [-a=/dev/ttyUSBx]",
+                    "Command line options description:",  cliOptions,
+                    "Licensed under the Apache License Version 2.0\nAn application by SquareBoot");
         }
         System.exit(code.getCode());
     }
