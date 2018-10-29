@@ -1,8 +1,8 @@
 [Desktop Entry]
 Encoding=UTF-8
-Name=AstroAllInOne console
-Comment=AstroAllInOne by SquareBoot (terminal version)
-Exec=/usr/bin/astroallinone --no-gui
+Name=AstroAllInOne CLI server
+Comment=AstroAllInOne stand-alone INDI server (port specified by settings).
+Exec=/usr/bin/astroallinone -v -p=0
 Icon=/usr/share/AstroAllInOne/logo-terminal.png
 Terminal=true
 Type=Application

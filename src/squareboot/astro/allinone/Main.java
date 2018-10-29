@@ -54,7 +54,7 @@ public class Main {
         options.addOption("d", "driver", false,
                 "Driver-only mode (no server, stdin/stdout)");
         options.addOption("p", "indi-port", true,
-                "Specifies a port for the INDI server (default 7625) and switches to stand-alone mode, with server.");
+                "Stand-alone server mode, CLI. If port=0, fetch the last used port from the settings.");
         options.addOption("a", "serial-port", true,
                 "Specifies a serial port and connects to it if possible. Otherwise it will be stored to settings only.");
         options.addOption("v", "verbose", false, "Verbose mode.");
@@ -88,9 +88,12 @@ public class Main {
             int serverPort = settings.getIndiPort();
             if (serverMode) {
                 try {
-                    serverPort = Integer.valueOf(line.getOptionValue('p'));
-                    settings.setIndiPort(serverPort);
-                    settings.save();
+                    int gp = Integer.valueOf(line.getOptionValue('p'));
+                    if (gp != 0) {
+                        serverPort = gp;
+                        settings.setIndiPort(serverPort);
+                        settings.save();
+                    }
 
                 } catch (NumberFormatException e) {
                     exit(ExitCodes.PARSING_ERROR);
@@ -112,11 +115,16 @@ public class Main {
                     @Override
                     protected void onRunServer(int port) {
                         runServer(port);
+                        if (Main.isGUIEnabled()) {
+                            SwingUtilities.invokeLater(ServerMiniWindow::new);
+                        }
                     }
                 });
 
             } else if (serverMode && (!controlPanel && !driverOnly)) {
+                Main.info("Welcome to AstroAllInOne CLI server!", false);
                 runServer(serverPort);
+                Main.info("Ctrl-C to stop");
 
             } else if (driverOnly && (!controlPanel && !serverMode)) {
                 new INDIArduinoDriver(System.in, System.out, autoConnectSerial);

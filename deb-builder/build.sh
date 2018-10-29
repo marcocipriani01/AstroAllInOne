@@ -6,7 +6,7 @@ function build() {
     dpkg-deb --build AstroAllInOne
     chown -R ${2}:${2} AstroAllInOne/
     chown -R ${2}:${2} AstroAllInOne.deb
-    DISPLAY=$3 zenity --question --title="AstroAllInOne" --text="Package created. Install it now?" --width=250
+    DISPLAY=$3 zenity --question --title="AstroAllInOne" --text="Package created. Install it now?" --width=250 2>/dev/null
     if [ "$?" == "0" ]; then
         dpkg -i ./AstroAllInOne.deb
     fi

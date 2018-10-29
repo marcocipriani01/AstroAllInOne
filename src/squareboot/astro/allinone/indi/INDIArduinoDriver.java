@@ -11,7 +11,6 @@ import squareboot.astro.allinone.io.SerialMessageListener;
 import squareboot.astro.allinone.io.SerialPortImpl;
 import squareboot.astro.allinone.io.SerialPortMultiplexer;
 
-import javax.swing.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -87,7 +86,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     private HashMap<INDIElement, ArduinoPin> pinsMap;
     /**
      * MoonLite virtual serial port RO field.
-     * */
+     */
     private INDITextProperty moonLitePortProp;
 
     /**
@@ -253,14 +252,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                 connectElem.setValue(Constants.SwitchStatus.ON);
                 disconnectElem.setValue(Constants.SwitchStatus.OFF);
                 connectionProp.setState(PropertyStates.OK);
-                if (Main.isGUIEnabled()) {
-                    SwingUtilities.invokeLater(() ->
-                            new ServerMiniWindow(mockedPort, this));
-
-                } else {
-                    Main.info("Connect MoonLite to port " + mockedPort);
-                    Main.info("Terminate to stop.");
-                }
+                Main.info("Connect MoonLite to port " + mockedPort);
 
             } catch (ConnectionException e) {
                 connectionProp.setState(PropertyStates.ALERT);
@@ -368,32 +360,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
                         serialInit();
 
                     } else if (element == disconnectElem) {
-                        if (serialPort != null) {
-                            try {
-                                serialPort.removeListener(this);
-                                multiplexer.stop();
-                                serialPort = null;
-                                multiplexer = null;
-                                removeProperty(moonLitePortProp);
-                                moonLitePortProp = null;
-                                removeProperty(digitalPinProps);
-                                digitalPinProps = null;
-                                removeProperty(pwmPinsProp);
-                                pwmPinsProp = null;
-                                pinsMap.clear();
-                                pinsMap = null;
-                                disconnectElem.setValue(Constants.SwitchStatus.ON);
-                                connectElem.setValue(Constants.SwitchStatus.OFF);
-                                connectionProp.setState(PropertyStates.OK);
-
-                            } catch (ConnectionException e) {
-                                Main.err(e.getMessage(), e, false);
-                                connectionProp.setState(PropertyStates.ALERT);
-                            }
-
-                        } else {
-                            connectionProp.setState(PropertyStates.ALERT);
-                        }
+                        serialDisconnect();
                     }
                     break;
                 }
@@ -431,6 +398,35 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
         }
     }
 
+    private void serialDisconnect() {
+        if (serialPort != null) {
+            try {
+                serialPort.removeListener(this);
+                multiplexer.stop();
+                serialPort = null;
+                multiplexer = null;
+                removeProperty(moonLitePortProp);
+                moonLitePortProp = null;
+                removeProperty(digitalPinProps);
+                digitalPinProps = null;
+                removeProperty(pwmPinsProp);
+                pwmPinsProp = null;
+                pinsMap.clear();
+                pinsMap = null;
+                disconnectElem.setValue(Constants.SwitchStatus.ON);
+                connectElem.setValue(Constants.SwitchStatus.OFF);
+                connectionProp.setState(PropertyStates.OK);
+
+            } catch (ConnectionException e) {
+                Main.err(e.getMessage(), e, false);
+                connectionProp.setState(PropertyStates.ALERT);
+            }
+
+        } else {
+            connectionProp.setState(PropertyStates.ALERT);
+        }
+    }
+
     @Override
     public void driverConnect(Date timestamp) {
         Main.info("Driver connection");
@@ -444,6 +440,7 @@ public class INDIArduinoDriver extends INDIDriver implements INDIConnectionHandl
     @Override
     public void driverDisconnect(Date timestamp) {
         Main.info("Driver disconnection");
+        serialDisconnect();
         removeProperty(connectionProp);
         removeProperty(serialPortFieldProp);
         if (getPropertiesAsList().contains(portsListProp)) {

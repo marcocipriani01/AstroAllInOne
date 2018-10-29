@@ -103,7 +103,7 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
                 int operation = JOptionPane.showConfirmDialog(null, "Save and exit, exit or cancel?", Main.APP_NAME,
                         JOptionPane.YES_NO_CANCEL_OPTION, JOptionPane.QUESTION_MESSAGE);
                 if (operation == JOptionPane.YES_OPTION) {
-                    savePinConfig();
+                    saveConfig();
                     Main.exit(Main.ExitCodes.OK);
 
                 } else if (operation == JOptionPane.NO_OPTION) {
@@ -112,9 +112,9 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             }
         });
 
-        saveButton.addActionListener(e -> savePinConfig());
+        saveButton.addActionListener(e -> saveConfig());
         sendConfigButton.addActionListener(e -> {
-            Settings settings = savePinConfig();
+            Settings settings = saveConfig();
             if (settings != null) {
                 String host = JOptionPane.showInputDialog(this, "Remote SSH server IP/address:", "SCP", JOptionPane.QUESTION_MESSAGE),
                         user = JOptionPane.showInputDialog(this, "Remote username:", "SCP", JOptionPane.QUESTION_MESSAGE);
@@ -128,15 +128,9 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             }
         });
         runServerButton.addActionListener(e -> {
-            int indiPort = (int) indiPortField.getValue();
-            if (indiPort < 50) {
-                Main.err("Invalid INDI port!", this);
-
-            } else {
-                Settings settings = Main.getSettings();
-                settings.setIndiPort(indiPort);
-                settings.save();
-                onRunServer(indiPort);
+            Settings settings = saveConfig();
+            if (settings != null) {
+                onRunServer(settings.getIndiPort());
                 dispose();
             }
         });
@@ -207,9 +201,17 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
      *
      * @return the used {@link Settings} object. May be null if the saving failed.
      */
-    private Settings savePinConfig() {
+    private Settings saveConfig() {
         Main.err("Saving settings...");
         Settings settings = Main.getSettings();
+        int indiPort = (int) indiPortField.getValue();
+        if (indiPort < 50) {
+            Main.err("Invalid INDI port!", this);
+            return null;
+
+        } else {
+            settings.setIndiPort(indiPort);
+        }
         try {
             if (!PinArray.checkPins(settings.getDigitalPins().toArray(), settings.getPwmPins().toArray())) {
                 Main.err("Duplicated pins found, please fix this in order to continue.", this);
@@ -224,6 +226,7 @@ public abstract class ControlPanel extends JFrame implements ActionListener {
             settings.save();
 
         } catch (UncheckedIOException e) {
+            e.printStackTrace();
             return null;
         }
         return settings;
